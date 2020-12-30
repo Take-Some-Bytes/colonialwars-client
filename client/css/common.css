@@ -1,0 +1,23 @@
+/* Styles that could be used in all pages. */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  font-size: 20px;
+}
+a {
+  color: rgb(169, 182, 255);
+}
+
+.has-border {
+  border-width: 2px;
+  border-style: solid;
+}
+.centered-block {
+  display: block;
+  margin: auto;
+}
