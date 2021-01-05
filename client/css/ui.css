@@ -45,7 +45,7 @@
   font-size: 1.4rem;
 }
 .ui-href-button:hover {
-  background-color: #d1cfc7;
+  background-color: rgb(209, 207, 199);
 }
 .ui-button-wrapper {
   text-align: center;
