@@ -52,9 +52,6 @@
   font-size: 0.8rem;
   font-family: Arial, Helvetica, sans-serif;
 }
-#menu-pane {
-  width: 50%;
-}
 
 /* Hide the image if the viewport is smaller than 1430 pixels. */
 @media (max-width: 1430px) {
