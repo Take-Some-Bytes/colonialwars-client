@@ -15,12 +15,13 @@
  * @returns {void|Promise<void>}
  */
 
-import * as uiHelpers from './ui-helpers.js'
+import * as domHelpers from '../helpers/dom-helpers.js'
+import EventEmitter from '../event-emitter.js'
 
 /**
  * Dialog class.
  */
-export default class Dialog extends EventTarget {
+export default class Dialog extends EventEmitter {
   /**
    * Constructor for a Dialog class.
    * @param {ViewportStats} viewportStats The dimensions of the viewport.
@@ -117,7 +118,7 @@ export default class Dialog extends EventTarget {
       this.container.appendChild(this.buttonPane)
     } catch (ex) {
       this.error = ex
-      this.dispatchEvent(new Event('error'))
+      this.dispatchEvent('error')
     }
   }
 
@@ -234,7 +235,7 @@ export default class Dialog extends EventTarget {
       'ui-radius'
     )
 
-    this.dispatchEvent(new Event('initialized'))
+    this.dispatchEvent('initialized')
   }
 
   /**
@@ -245,7 +246,7 @@ export default class Dialog extends EventTarget {
     if (this.config.draggable) {
       this.header.style.cursor = 'move'
       if (!this.couldBeDragged) {
-        this.couldBeDragged = uiHelpers.makeDraggable(
+        this.couldBeDragged = domHelpers.makeDraggable(
           this.container, this.header.id, {
             x: {
               min: 0, max: this.viewportStats.width
@@ -267,9 +268,9 @@ export default class Dialog extends EventTarget {
    */
   _render () {
     if (this.config.renderTarget instanceof HTMLElement) {
-      uiHelpers.render(this.container, this.config.renderTarget)
+      domHelpers.render(this.container, this.config.renderTarget)
       if (this.config.isModal && this.overlay instanceof HTMLDivElement) {
-        uiHelpers.render(this.overlay, this.config.renderTarget)
+        domHelpers.render(this.overlay, this.config.renderTarget)
       }
     } else {
       throw new TypeError(
@@ -283,15 +284,15 @@ export default class Dialog extends EventTarget {
    * @private
    */
   _reset () {
-    uiHelpers.removeAllChildNodes(this.headerSpan)
-    uiHelpers.removeAllChildNodes(this.buttonPane)
+    domHelpers.removeAllChildNodes(this.headerSpan)
+    domHelpers.removeAllChildNodes(this.buttonPane)
 
     try {
       this._updateDimensions()
     } catch (ex) {
       this.rendered = false
       this.error = ex
-      this.dispatchEvent(new Event('error'))
+      this.dispatchEvent('error')
     }
   }
 
@@ -347,11 +348,11 @@ export default class Dialog extends EventTarget {
    */
   hide () {
     if (this.config.isModal && this.overlay instanceof HTMLDivElement) {
-      uiHelpers.removeChildNode(this.overlay, this.config.renderTarget)
+      domHelpers.removeChildNode(this.overlay, this.config.renderTarget)
     }
     this.container.style.display = 'none'
     this.rendered = false
-    this.dispatchEvent(new Event('hidden'))
+    this.dispatchEvent('hidden')
     return this
   }
 
@@ -360,7 +361,7 @@ export default class Dialog extends EventTarget {
    * @returns {Dialog}
    */
   refreshButtons () {
-    uiHelpers.removeAllChildNodes(this.buttonPane)
+    domHelpers.removeAllChildNodes(this.buttonPane)
     this._createButtons()
     return this
   }
@@ -437,7 +438,7 @@ export default class Dialog extends EventTarget {
       this.buttons[name] = callback
     } catch (ex) {
       this.error = ex
-      this.dispatchEvent(new Event('error'))
+      this.dispatchEvent('error')
     }
     return this
   }
@@ -450,7 +451,7 @@ export default class Dialog extends EventTarget {
    */
   setContent (content, append = true) {
     if (!append) {
-      uiHelpers.removeAllChildNodes(this.contentContainer)
+      domHelpers.removeAllChildNodes(this.contentContainer)
     }
 
     if (typeof content === 'string') {
@@ -484,13 +485,44 @@ export default class Dialog extends EventTarget {
       this._render()
       this._makeDraggable()
       this.rendered = true
-      this.dispatchEvent(new Event('rendered'))
+      this.dispatchEvent('rendered')
       return this
     } catch (ex) {
       this.rendered = false
       this.error = ex
-      this.dispatchEvent(new Event('error'))
+      this.dispatchEvent('error')
       return this
     }
+  }
+
+  /**
+   * Creates a new dialog.
+   * @param {import('../constants').ClientConstants} constants Client side constants.
+   * @param {string} name A unique name for the dialog to be created.
+   * @param {Object<string, any>} config Any other configurations to apply to the dialog.
+   * @returns {Dialog}
+   */
+  static create (constants, name, config) {
+    const dialog = new Dialog({
+      height: constants.VIEWPORT_HEIGHT,
+      width: constants.VIEWPORT_WIDTH
+    }, name)
+
+    Object.keys(config).forEach(key => {
+      dialog.set(key, config[key])
+    })
+    dialog
+      .set('width', Math.round(constants.VIEWPORT_WIDTH / 3))
+      .set('height', Math.round(constants.VIEWPORT_HEIGHT * 10 / 1.5 / 10)).set(
+        'x',
+        Math.round(constants.VIEWPORT_WIDTH / 2) - dialog.get('width') / 2
+      ).set(
+        'y',
+        Math.round(constants.VIEWPORT_HEIGHT / 2) - dialog.get('height') / 2
+      ).set(
+        'title', name
+      )
+
+    return dialog
   }
 }
