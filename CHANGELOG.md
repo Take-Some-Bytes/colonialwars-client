@@ -3,6 +3,21 @@ Changelog for ``colonialwars-client``.
 
 The format is based on [Keep a Changelog][1], and this project adheres to [Semantic Versioning][2].
 
+## [v0.3.0] - 2021-02-11
+### Added:
+- Added a ``RadioButtonList`` class to construct lists of radio buttons.
+- Added compatibility data in ``README.md``.
+- Added a second stage to the ``Play`` dialog--after you click the ``Next`` button, the client will
+fetch a list of games available on the server you selected, and show them to the client.
+### Changed:
+- Made ``Play`` dialog size dynamic on page load, and constant when the window changes size.
+- Updated validation functions and updated validation schemas for client input.
+- Updated player name input validation/sanitation--more characters are now alowed, and the error
+messages have become much clearer.
+### Fixed:
+- Fixed the fact that scrollbars appeared regardless of whether they are needed on some OSes.
+- Fixed inconsistent dialog content height, and buggy scrolling.
+
 ## [v0.2.0] - 2021-01-05
 ### Added:
 - Added a ``validator.js`` helper file to validate client input.
@@ -27,4 +42,5 @@ custom ``EventEmitter`` implementation in place of it.
 [2]: https://semver.org
 
 [v0.1.0]: https://github.com/Take-Some-Bytes/colonialwars-client/tree/bec2736d782914a69f6d861e076b4e6c38487a7f
-[v0.2.0]: https://github.com/Take-Some-Bytes/colonialwars-client/tree/main
+[v0.2.0]: https://github.com/Take-Some-Bytes/colonialwars-client/tree/f3f8432130d30a28da961fb464069ea104cadca4
+[v0.3.0]: https://github.com/Take-Some-Bytes/colonialwars-client/tree/main
