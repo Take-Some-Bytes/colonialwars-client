@@ -21,17 +21,26 @@
  * @prop {string} serverName
  * @prop {ServerStatus} status
  *
- * @typedef {Object} FetchersConfig
+ * @typedef {Object} GameMetaObj
+ * @prop {string} id
+ * @prop {string} mode
+ * @prop {string} name
+ * @prop {Array<string>} teams
+ * @prop {Object} capacity
+ * @prop {number} capacity.max
+ * @prop {number} capacity.current
+ *
+ * @typedef {Object} FetcherConfig
  * @prop {import('../constants').ClientConstants} constants
  */
 
 /**
- * Fetchers class.
+ * Fetcher class.
  */
-export default class Fetchers {
+export default class Fetcher {
   /**
-   * Constructor for a Fetchers class.
-   * @param {FetchersConfig} config Configurations.
+   * Constructor for a Fetcher class.
+   * @param {FetcherConfig} config Configurations.
    */
   constructor (config) {
     const { constants } = config
@@ -103,5 +112,29 @@ export default class Fetchers {
     }
 
     return statuses
+  }
+
+  /**
+   * Fetches the list of available games available from the specified server.
+   * @param {string} serverOrigin The origin of the server to get the list of games from.
+   * @returns {Promise<Array<GameMetaObj>>}
+   */
+  async fetchGamesListFrom (serverOrigin) {
+    const version = String(this.constants.VERSION)
+    const res = await fetch(`${serverOrigin}/games-stats`, {
+      method: 'GET',
+      headers: {
+        'X-App-Version': version,
+        'X-Is-Trusted': '1',
+        'X-Requested-With': 'JavaScript::Fetch-API'
+      }
+    })
+    if (!res.ok) {
+      throw new Error(
+        `Failed to fetch list of available games from ${serverOrigin}.`
+      )
+    }
+
+    return await res.json()
   }
 }
