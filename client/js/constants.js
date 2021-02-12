@@ -19,7 +19,7 @@ export function getConstants () {
   return {
     VIEWPORT_HEIGHT: viewportStats.height,
     VIEWPORT_WIDTH: viewportStats.width,
-    VERSION: 'v0.2.0-PRE-ALPHA'
+    VERSION: 'v0.3.0-PRE-ALPHA'
   }
 }
 
