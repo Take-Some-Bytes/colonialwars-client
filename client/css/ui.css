@@ -1,4 +1,14 @@
+/* Remove margins, padding, and set box-sizing to border-box. */
+*[class^='ui-'],*[class*=' ui-'] {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
 /* Basic UI CSS classes. */
+.ui-no-bold {
+  font-weight: normal !important;
+}
 .ui-radius {
   border-radius: 3px;
 }
