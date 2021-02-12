@@ -11,16 +11,16 @@
 /**
  * The default amount of maximum listeners on
  * a single instance of the EventEmitter class.
+ * @type {10}
  * @readonly
  */
-export const defaultMaxListeners = 10
+export const DEFAULT_MAX_LISTENERS = 10
 /**
  * EventEmitter class.
  */
 export default class EventEmitter {
   /**
    * Constructor for an EventEmitter class.
-   * @class
    */
   constructor () {
     /**
@@ -28,7 +28,7 @@ export default class EventEmitter {
      */
     this.listeners = {}
 
-    this.maxListeners = defaultMaxListeners
+    this.maxListeners = DEFAULT_MAX_LISTENERS
   }
 
   /**
