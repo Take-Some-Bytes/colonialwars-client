@@ -6,8 +6,10 @@
 
 import Dialog from '../ui/dialog.js'
 import SelectMenu from '../ui/selectmenu.js'
+import RadioButtonList from '../ui/radio-button-list.js'
 
 import * as validator from '../validation/validator.js'
+import * as domHelpers from '../helpers/dom-helpers.js'
 
 import { playInputSchemas } from '../validation/schemas.js'
 import { removeAllChildNodes } from '../helpers/dom-helpers.js'
@@ -44,6 +46,23 @@ export default class PlayDialog {
     this.name = 'Play'
 
     this._dialog = null
+    this._selectmenu = null
+    this._radioButtonList = null
+  }
+
+  /**
+   * Displays data about a specified game.
+   * @param {RadioButtonList} radioList The radio list of games that the client could select.
+   */
+  _displayGameData (radioList) {
+    const gameStatsContainer = this._dialog.contentContainer.querySelector('#game-stats-container')
+    const gameData = JSON.parse(radioList.selected)
+    domHelpers.removeAllChildNodes(gameStatsContainer)
+    gameStatsContainer.insertAdjacentHTML(
+      'afterbegin', [
+        `<h4>${gameData.name} ${gameData.id}</h4>`
+      ].join('')
+    )
   }
 
   /**
@@ -51,32 +70,66 @@ export default class PlayDialog {
    * @param {Event} e The DOM event that happened.
    * @private
    */
-  _onNext (e) {
+  async _onNext (e) {
     const errorSpan = document.querySelector('#error-span')
-    let tempData = null
+    const dialog = this._dialog
 
     removeAllChildNodes(errorSpan)
     e.preventDefault()
 
     const data = {
       playerName: document.querySelector('#name-input').value,
-      server: (
-        tempData = document.querySelector('#select-server option:checked')
-      ) !== null
-        ? tempData.value
-        : null
+      server: this._selectmenu.selected
     }
     const error = validator.validateObj(this.schemas[0], data)
     if (error instanceof validator.ValidationError) {
       errorSpan.classList.add('error')
       errorSpan.appendChild(document.createTextNode(
-        `${error.message}\nTo fix this issue, ${error.toFix.toLowerCase()}`
+        `${error.message} To fix this issue, ${error.toFix.toLowerCase()}`
       ))
       return
     }
 
     console.log(data)
     console.log(JSON.parse(data.server))
+    dialog.setContent('<b>Loading...</b>', false)
+    this._selectmenu = null
+    this.state.onSlide = 1
+    this.setDialogButtons()
+    try {
+      const parsedData = JSON.parse(data.server)
+      const games = await this.fetcher.fetchGamesListFrom(parsedData.serverLocation)
+      const len = games.length
+      const radioList = this._radioButtonList = new RadioButtonList('game-select')
+
+      console.log(games)
+      for (let i = 0; i < len; i++) {
+        const game = games[i]
+        this._radioButtonList.setOption(`game-${game.id}`, {
+          labelContent: `${game.name} ${game.id}`,
+          checked: i === 0,
+          value: JSON.stringify(game)
+        })
+      }
+      dialog.setContent([
+        '<form id="dialog-form-1">',
+        '<div id="game-list-container">',
+        `<label for="${this._radioButtonList.listContainer.id}">Choose a game</label><br>`,
+        '</div><hr><div id="game-stats-container"></div></form>',
+        '<span id="error-span"></span>'
+      ].join(''), false)
+      this._displayGameData(radioList)
+      radioList.set('renderTarget', dialog.contentContainer.querySelector('#game-list-container'))
+      radioList.on('change', () => {
+        this._displayGameData(radioList)
+      })
+    } catch (ex) {
+      console.error(ex)
+      errorSpan.classList.add('error')
+      errorSpan.appendChild(document.createTextNode(
+        'Something went wrong. Please try again later.'
+      ))
+    }
   }
 
   /**
@@ -93,10 +146,10 @@ export default class PlayDialog {
    * @private
    */
   _getSelectMenu (id) {
-    if (this.selectmenu instanceof SelectMenu &&
-      `#${this.selectmenu.selectmenu.id}` === id
+    if (this._selectmenu instanceof SelectMenu &&
+      `#${this._selectmenu.selectmenu.id}` === id
     ) {
-      return this.selectmenu
+      return this._selectmenu
     }
     return new SelectMenu(id).set('dropDownArrowSrc', '/imgs/drop-down-arrow.png').set('height', 45)
   }
@@ -106,6 +159,16 @@ export default class PlayDialog {
    */
   initDialog () {
     this._dialog = Dialog.create(this.constants, this.name, this.dialogConf)
+    this._dialog.onCloseButtonClick(e => {
+      e.preventDefault()
+      this.state.onSlide = 0
+      this._dialog.set('show', false)
+    })
+    this._dialog.set(
+      'min-height', 300
+    ).set(
+      'min-width', 300
+    )
   }
 
   /**
@@ -115,6 +178,7 @@ export default class PlayDialog {
     const slideNum = this.state.onSlide
     this._dialog.setButton('Cancel', e => {
       e.preventDefault()
+      this.state.onSlide = 0
       this._dialog.set('show', false)
     })
     this._dialog.setButton(
@@ -122,6 +186,12 @@ export default class PlayDialog {
         ? this._onNext.bind(this)
         : this._onPlay.bind(this)
     )
+    if (slideNum === 0) {
+      this._dialog.removeButton('Play')
+    } else if (slideNum === 1) {
+      this._dialog.removeButton('Next')
+      this._dialog.render(true)
+    }
   }
 
   /**
@@ -139,30 +209,17 @@ export default class PlayDialog {
     const button = document.querySelector('#play-href')
     const dialog = this._dialog
 
-    button.addEventListener('click', e => {
+    button.addEventListener('click', async e => {
       e.preventDefault()
+      await this.setPlayDialogContent()
 
+      this.setDialogButtons()
       dialog.set('show', true)
       document.querySelector('#name-input').value = ''
       document.querySelector('#name-input').focus()
-      this.selectmenu = this._getSelectMenu('#select-server')
-      this.selectmenu.render()
+      this._selectmenu = this._getSelectMenu('#select-server')
+      this._selectmenu.render()
     })
-  }
-
-  /**
-   * Updates this dialog's dimensions.
-   */
-  updateDimensions () {
-    if (!(this._dialog instanceof Dialog)) {
-      // No-op if this component's dialog is not yet initialized
-      return
-    }
-    this._dialog
-      .set('width', Math.round(this.constants.VIEWPORT_WIDTH / 3))
-      .set('height', Math.round(this.constants.VIEWPORT_HEIGHT * 10 / 1.5 / 10))
-      .set('x', Math.round(this.constants.VIEWPORT_WIDTH / 2) - this._dialog.get('width') / 2)
-      .set('y', Math.round(this.constants.VIEWPORT_HEIGHT / 2) - this._dialog.get('height') / 2)
   }
 
   /**
@@ -190,13 +247,15 @@ export default class PlayDialog {
       '<select id="select-server"></select>',
       '</div></form>',
       '<span id="error-span"></span>'
-    ].join(''))
+    ].join(''), false)
 
     try {
       const servers = await this.fetcher.fetchAvailableServers()
       const serverStatuses = await this.fetcher.fetchServersStatus(servers)
       const dialogContent = dialog.contentContainer
-      const selectMenu = dialogContent.querySelector('#select-server')
+      const selectMenu = new SelectMenu(
+        dialogContent.querySelector('#select-server')
+      ).set('dropDownArrowSrc', '/imgs/drop-down-arrow.png').set('height', 45)
       const serversAvailable = servers.serversAvailable.map(stats => {
         const serverStatus = serverStatuses[stats.serverName].status
 
@@ -218,15 +277,17 @@ export default class PlayDialog {
       }).filter(stats => !!stats.available)
 
       serversAvailable.forEach((stats, i) => {
-        const option = document.createElement('option')
-        option.selected = i === 0
-        option.value = JSON.stringify({
-          serverLocation: stats.location,
-          serverName: stats.serverName
+        selectMenu.setOption(`opt-${i}`, {
+          add: true,
+          value: JSON.stringify({
+            serverLocation: stats.location,
+            serverName: stats.serverName
+          }),
+          content: stats.serverName,
+          selected: i === 0
         })
-        option.appendChild(document.createTextNode(stats.serverName))
-        selectMenu.appendChild(option)
       })
+      this._selectmenu = selectMenu
     } catch (ex) {
       console.error(ex.stack)
     }
@@ -235,10 +296,9 @@ export default class PlayDialog {
   /**
    * Initializes this component.
    */
-  async init () {
+  init () {
     this.initDialog()
     this.setDialogButtons()
     this.registerEventListeners()
-    await this.setPlayDialogContent()
   }
 }
