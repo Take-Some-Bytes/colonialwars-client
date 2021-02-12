@@ -32,6 +32,41 @@ export class ValidationError extends Error {
  */
 
 /**
+ * Validates an object.
+ * @param {ValidatorSchema} expected The schema for the object.
+ * @param {any} obj The object to validate.
+ * @returns {true|ValidationError}
+ */
+export function validateObj (expected, obj) {
+  const expectedKeys = Object.keys(expected)
+  const expectedKeysLen = expectedKeys.length
+
+  for (let i = 0; i < expectedKeysLen; i++) {
+    const key = expectedKeys[i]
+    const validator = expected[key]
+    const val = obj[key]
+
+    if (!(key in obj)) {
+      return new ValidationError(
+        `Property ${key} does not exist on input object!`,
+        'EMISSING', 'Make sure the key exists on input object.'
+      )
+    } else if (typeof validator !== 'function') {
+      throw new TypeError(`Validator #${i + 1} is not a function!`)
+    }
+
+    const result = validator(val)
+    if (result !== true) {
+      return new ValidationError(
+        result.message, result.typeCode,
+        result.toFix
+      )
+    }
+  }
+  return true
+}
+
+/**
  * Returns a function that checks if the given value is a string.
  * @returns {ValidatorFunc}
  */
@@ -63,41 +98,27 @@ export function json () {
     return true
   }
 }
-
 /**
- * Validates an object.
- * @param {ValidatorSchema} expected The schema for the object.
- * @param {any} obj The object to validate.
- * @returns {true|ValidationError}
+ * Returns a function that checks if the value matches all the validation
+ * functions that are passed in.
+ * @param  {...ValidatorFunc} validators The validation functions.
+ * @returns {ValidatorFunc}
  */
-export function validateObj (expected, obj) {
-  const expectedKeys = Object.keys(expected)
-  const expectedKeysLen = expectedKeys.length
-
-  for (let i = 0; i < expectedKeysLen; i++) {
-    const key = expectedKeys[i]
-    const validator = expected[key]
-    const val = obj[key]
-
-    if (!(key in obj)) {
-      return new ValidationError(
-        `Property ${key} does not exist on input object!`,
-        'EMISSING', 'Make sure the key exists on input object.'
-      )
-    } else if (typeof validator !== 'function') {
-      return new ValidationError(
-        'Validator is not a function!',
-        'EFAILED', 'Pass in the proper validator function.'
-      )
-    }
-
-    const result = validator(val)
-    if (result !== true) {
-      return new ValidationError(
-        result.message, result.typeCode,
-        result.toFix
-      )
-    }
+export function all (...validators) {
+  if (!validators.every(func => typeof func === 'function')) {
+    throw new TypeError(
+      'All items in the validators parameter must be functions!'
+    )
   }
-  return true
+  return val => {
+    const length = validators.length
+    for (let i = 0; i < length; i++) {
+      const func = validators[i]
+      const result = func(val)
+      if (result instanceof ValidationError) {
+        return result
+      }
+    }
+    return true
+  }
 }
