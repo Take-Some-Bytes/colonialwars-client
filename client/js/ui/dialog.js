@@ -74,6 +74,13 @@ export default class Dialog extends EventEmitter {
         y: 0
       }
     }
+    /**
+     * @param {MouseEvent} e
+     */
+    this.closeButtonHandler = e => {
+      e.preventDefault()
+      this.set('show', false)
+    }
     // Define all information about setting configurations.
     this.keys = {
       legalKeys: [
@@ -177,8 +184,11 @@ export default class Dialog extends EventEmitter {
 
     this.container.style.minHeight = `${this.config.minDimensions.height}px`
     this.container.style.minWidth = `${this.config.minDimensions.width}px`
+    this.contentContainer.style.maxHeight =
+      `${parseInt(this.container.style.height, 10) - this.header.clientHeight - this.buttonPane.clientHeight}px`
+    this.contentContainer.style.overflow = 'auto'
 
-    if (this.config.isModal) {
+    if (this.config.isModal && !(this.overlay instanceof HTMLDivElement)) {
       this.overlay = document.createElement('div')
       this._prepareOverlay()
     }
@@ -206,10 +216,7 @@ export default class Dialog extends EventEmitter {
    */
   _init () {
     this.closeButton.type = 'button'
-    this.closeButton.addEventListener('click', e => {
-      e.preventDefault()
-      this.set('show', false)
-    })
+    this.closeButton.addEventListener('click', this.closeButtonHandler)
 
     this.contentContainer.classList.add('dialog-content')
     this.headerSpan.classList.add('dialog-header-span')
@@ -404,7 +411,7 @@ export default class Dialog extends EventEmitter {
       } else if (['x', 'y'].includes(key)) {
         this.config.position[key] = val
       } else if (['min-width', 'min-height'].includes(key)) {
-        this.config.minDimensions[key] = val
+        this.config.minDimensions[key.substring(4)] = val
       }
     } else {
       this.config[key] = val
@@ -466,16 +473,17 @@ export default class Dialog extends EventEmitter {
 
   /**
    * Renders this dialog.
+   * @param {boolean} force Whether to force the render.
    * @returns {Dialog}
    */
-  render () {
+  render (force) {
     try {
-      if (!this.config.show) {
+      if (!this.config.show && !force) {
         if (this.rendered) {
           this.hide()
         }
         return this
-      } else if (this.rendered) {
+      } else if (this.rendered && !force) {
         // If dialog is already rendered, user probably wants to change
         // height or width (or x or y). In that case, do it.
         this._updateDimensions()
@@ -493,6 +501,17 @@ export default class Dialog extends EventEmitter {
       this.dispatchEvent('error')
       return this
     }
+  }
+
+  /**
+   * Overrides the default action when the close button (the ``x`` button) is pressed.
+   * @param {import('../event-emitter').ListeningListener} handler The handler
+   * for the event.
+   */
+  onCloseButtonClick (handler) {
+    this.closeButton.removeEventListener('click', this.closeButtonHandler)
+    this.closeButtonHandler = handler
+    this.closeButton.addEventListener('click', this.closeButtonHandler)
   }
 
   /**
