@@ -73,7 +73,6 @@ export default class LobbyApp {
    */
   updateDialogDimensions () {
     this.components.settingsDialog.updateDimensions()
-    this.components.playDialog.updateDimensions()
   }
 
   /**
@@ -91,11 +90,11 @@ export default class LobbyApp {
   /**
    * Runs the lobby app.
    */
-  async run () {
+  run () {
     this.displayVersion()
     this.createComponents()
     this.registerEventListeners()
-    await this.components.playDialog.init()
-    await this.components.settingsDialog.init()
+    this.components.playDialog.init()
+    this.components.settingsDialog.init()
   }
 }
