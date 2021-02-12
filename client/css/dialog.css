@@ -1,3 +1,10 @@
+/* Remove margins, padding, and set box-sizing to border-box. */
+*[class^='dialog-'],*[class*=' dialog-'] {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
 /* Dialog UI classes. */
 .dialog-container {
   position: absolute;
@@ -51,19 +58,18 @@
   border: 1px solid rgb(197, 197, 197);
   font-weight: bold;
 }
-.dialog-inner-container {
-  position: relative;
-  min-height: 100%;
-  background: none;
-  box-sizing: content-box;
-}
 .dialog-content {
   display: block;
   padding: 0.5em 1em;
-  overflow: scroll;
-  max-height: 50%;
+  overflow: auto;
   font-family: Arial,Helvetica,sans-serif;
   font-size: 1em;
+
+  position: absolute;
+  top: 57px;
+  bottom: 82px;
+  right: 4px;
+  left: 4px;
 }
 .dialog-button-pane {
   position: absolute;
