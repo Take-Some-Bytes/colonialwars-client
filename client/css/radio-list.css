@@ -1,0 +1,52 @@
+/* Radio button list classes. */
+.radio-list-item-container {
+  cursor: pointer;
+  font-size: 1em;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+
+  padding: 7px;
+  padding-left: 40px;
+  margin-bottom: 1px;
+  height: 40px;
+  width: 250px;
+  position: relative;
+}
+.radio-list-item-container input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+}
+.radio-list-item-container input:checked ~ .radio-list-checkmark {
+  background-color: rgb(33, 150, 243);
+}
+.radio-list-item-container input:checked ~ .radio-list-checkmark::after {
+  display: block;
+}
+.radio-list-item-container .radio-list-checkmark::after {
+  top: 9px;
+  left: 9px;
+  width: 8px;
+  height: 8px;
+
+  border-radius: 50%;
+  background: white;
+}
+.radio-list-checkmark {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  left: 6px;
+  height: 25px;
+  width: 25px;
+
+  background-color: rgb(252, 252, 252);
+  border-radius: 50%;
+}
+.radio-list-checkmark::after {
+  content: "";
+  position: absolute;
+  display: none;
+}
