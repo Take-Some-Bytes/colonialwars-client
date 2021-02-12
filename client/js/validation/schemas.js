@@ -10,31 +10,21 @@ import * as validator from './validator.js'
  */
 export const playInputSchemas = [
   {
-    playerName: val => {
-      if (typeof val !== 'string') {
+    playerName: validator.all(validator.string(), val => {
+      if (!/^[\w[\]{}()$\-*.,~\s]*$/i.test(val)) {
         return new validator.ValidationError(
-          'Player name does not exist or is not a string!', 'EINVAlID',
-          'Please enter a name between 2 and 22 characters.'
+          'Invalid characters in player name!', 'EINVALID',
+          'Please only enter alpanumeric characters, spaces' +
+          ', and the following: []{}()$-*.,~'
         )
-      } else if (!/^\w{2,23}$/.test(val)) {
+      } else if (!/^.{2,22}$/.test(val)) {
         return new validator.ValidationError(
-          'Player name is too long or too short!', 'ELENGTH',
+          'Name is too long or too short!', 'ELENGTH',
           'Please enter a name between 2 and 22 characters.'
         )
       }
       return true
-    },
-    server: val => {
-      const results = []
-      const errors = []
-      results.push(validator.string()(val))
-      results.push(validator.json()(val))
-      errors.push(...results.filter(result => result instanceof validator.ValidationError))
-
-      if (errors.length > 0) {
-        return errors[0]
-      }
-      return true
-    }
+    }),
+    server: validator.all(validator.string(), validator.json())
   }
 ]
