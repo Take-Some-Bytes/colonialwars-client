@@ -7,3 +7,13 @@ This repository includes:
 The back-end application could be found at ``colonialwars-server``.
 
 There are no tests.
+
+## Compatibility
+| colonialwars-client | colonialwars-server |
+|:-------------------:|---------------------|
+| <=0.2.0             | >=0.2.0             |
+| 0.3.0               | 0.3.2               |
+
+## Dependencies
+Aside from the development dependencies listed in ``package.json``, this project now also
+needs ``colonialwars-server`` .
