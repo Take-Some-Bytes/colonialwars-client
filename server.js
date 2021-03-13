@@ -71,10 +71,13 @@ app.use('/xhr', (req, res, next) => {
       res.statusCode = 200
       res.setHeader('Content-Type', 'application/json')
       res.write(JSON.stringify({
-        serversAvailable: [
-          // Send only one server name.
-          { serverName: 'Development 1', location: 'http://localhost:4000' }
-        ]
+        status: 'ok',
+        data: {
+          serversAvailable: [
+            // Send only one server name.
+            { serverName: 'Development 1', location: 'http://0.0.0.0:4000' }
+          ]
+        }
       }))
       res.end()
       break
