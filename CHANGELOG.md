@@ -3,6 +3,17 @@ Changelog for ``colonialwars-client``.
 
 The format is based on [Keep a Changelog][1], and this project adheres to [Semantic Versioning][2].
 
+## [v0.4.0] - 2021-03-12
+### Added:
+- Added an adapter in ``helpers/adapters.js`` to "convert" the new HTTP response body structure
+into the old expected response body structure.
+### Changed:
+- Updated all response data parsing to expect the structure defined in
+[``specifications/colonialwars/message-structures.md``](
+  https://github.com/Take-Some-Bytes/specifications/blob/main/colonialwars/message-structure.md#http-response-body-structure
+).
+- Updated compatibility data in ``README.md``.
+
 ## [v0.3.0] - 2021-02-11
 ### Added:
 - Added a ``RadioButtonList`` class to construct lists of radio buttons.
@@ -43,4 +54,5 @@ custom ``EventEmitter`` implementation in place of it.
 
 [v0.1.0]: https://github.com/Take-Some-Bytes/colonialwars-client/tree/bec2736d782914a69f6d861e076b4e6c38487a7f
 [v0.2.0]: https://github.com/Take-Some-Bytes/colonialwars-client/tree/f3f8432130d30a28da961fb464069ea104cadca4
-[v0.3.0]: https://github.com/Take-Some-Bytes/colonialwars-client/tree/main
+[v0.3.0]: https://github.com/Take-Some-Bytes/colonialwars-client/tree/7fbb2ec25351f8369227f67332e86dec4206dc43
+[v0.4.0]: https://github.com/Take-Some-Bytes/colonialwars-client/tree/main
