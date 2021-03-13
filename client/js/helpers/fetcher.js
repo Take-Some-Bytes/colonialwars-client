@@ -3,6 +3,8 @@
  * @fileoverview Functions that fetch data from back-end servers.
  */
 
+import * as adapters from './adapters.js'
+
 /**
  * @typedef {Object} AvailableServers
  * @prop {Array<AvailableServer>} serversAvailable
@@ -68,7 +70,7 @@ export default class Fetcher {
       )
     }
 
-    return await res.json()
+    return adapters.httpResponseAdapter(await res.json())
   }
 
   /**
@@ -101,7 +103,7 @@ export default class Fetcher {
 
         statuses[server.serverName] = {
           serverName: server.serverName,
-          status: await res.json()
+          status: adapters.httpResponseAdapter(await res.json())
         }
       } catch (ex) {
         console.error(`Error while fetching ${server.serverName}'s status!`)
@@ -135,6 +137,6 @@ export default class Fetcher {
       )
     }
 
-    return await res.json()
+    return adapters.httpResponseAdapter(await res.json())
   }
 }
