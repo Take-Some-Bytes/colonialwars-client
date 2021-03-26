@@ -1,21 +1,19 @@
 /* Select menu classes. */
-.select-menu-content {
-  background: transparent;
+.custom-select {
   -webkit-appearance: none;
   -moz-appearance: none;
-  appearance: none;
 
-  font-size: 1em;
-  color: rgb(0, 0, 0);
-
-  border: 0;
-  border-radius: 0;
-  padding: 10px 20px;
-}
-.select-menu-wrapper {
-  overflow: hidden;
+  background: transparent;
   background-repeat: no-repeat;
   background-size: 15px;
   background-position: right 5% bottom 50%;
-  background-color: rgb(246, 246, 246);
+
+  margin-right: 2rem;
+  padding: 10px 20px;
+  padding-right: 25px;
+
+  font-size: 1em;
+}
+.custom-select:hover {
+  cursor: pointer;
 }
