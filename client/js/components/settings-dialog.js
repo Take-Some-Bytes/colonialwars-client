@@ -63,7 +63,7 @@ export default class SettingsDialog {
    * Registers this component's required event listeners.
    */
   registerEventListeners () {
-    const button = document.querySelector('#settings-href')
+    const button = document.querySelector('#settings-button')
     const dialog = this._dialog
 
     button.addEventListener('click', e => {

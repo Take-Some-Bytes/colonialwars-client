@@ -16,7 +16,8 @@ import { removeAllChildNodes } from '../helpers/dom-helpers.js'
 
 /**
  * @typedef {Object} PlayDialogConfig
- * @prop {Object<string, any>} dialogConf
+ * @prop {Record<string, any>} dialogConf
+ * @prop {Record<string, string} previewsPaths
  * @prop {import('../helpers/fetcher').default} fetcher
  * @prop {import('../constants').ClientConstants} constants
  */
@@ -31,13 +32,14 @@ export default class PlayDialog {
    */
   constructor (config) {
     const {
-      dialogConf, fetcher, constants
+      dialogConf, fetcher, constants, previewsPaths
     } = config
 
     this.schemas = playInputSchemas
     this.dialogConf = dialogConf
     this.fetcher = fetcher
     this.constants = constants
+    this.previewsPaths = previewsPaths
 
     this.buttons = ['Next', 'Play']
     this.state = {
@@ -53,16 +55,49 @@ export default class PlayDialog {
   /**
    * Displays data about a specified game.
    * @param {RadioButtonList} radioList The radio list of games that the client could select.
+   * @private
    */
   _displayGameData (radioList) {
     const gameStatsContainer = this._dialog.contentContainer.querySelector('#game-stats-container')
     const gameData = JSON.parse(radioList.selected)
+    const preview = document.createElement('img')
     domHelpers.removeAllChildNodes(gameStatsContainer)
+
+    preview.id = 'map-preview'
+    preview.src =
+      `${this.constants.IMG_CONSTANTS.GAME_IMAGE_DIR}/${this.previewsPaths[gameData.name.toLowerCase()]}`
+
     gameStatsContainer.insertAdjacentHTML(
-      'afterbegin', [
-        `<h4>${gameData.name} ${gameData.id}</h4>`
+      'afterbegin',
+      [
+        '<header><span class="has-margin bold">',
+        `${gameData.name} ${gameData.id}: ${gameData.mode}</span></header>`
       ].join('')
     )
+    gameStatsContainer.appendChild(preview)
+    gameStatsContainer.insertAdjacentHTML(
+      'beforeend',
+      [
+        '<p class="sidebar-float">Players: ',
+        `${gameData.capacity.current}/${gameData.capacity.max}</p>`,
+        `<p>${gameData.description}</p>`
+      ].join('')
+    )
+    const selectmenu = new SelectMenu('team-select')
+      .set('dropDownArrowSrc', '/imgs/drop-down-arrow.png')
+      .set('renderTarget', gameStatsContainer)
+      .set('height', 45)
+    for (let i = 0, l = gameData.teams.length; i < l; i++) {
+      selectmenu.setOption(
+        `team-opt-${i}`, {
+          add: true,
+          value: gameData.teams[i],
+          content: gameData.teams[i],
+          selected: i === 0
+        }
+      )
+    }
+    selectmenu.render()
   }
 
   /**
@@ -140,21 +175,6 @@ export default class PlayDialog {
   _onPlay (e) {}
 
   /**
-   * Gets the selectmenu for the first Play dialog form.
-   * @param {string} id The ID of the selectmenu.
-   * @returns {SelectMenu}
-   * @private
-   */
-  _getSelectMenu (id) {
-    if (this._selectmenu instanceof SelectMenu &&
-      `#${this._selectmenu.selectmenu.id}` === id
-    ) {
-      return this._selectmenu
-    }
-    return new SelectMenu(id).set('dropDownArrowSrc', '/imgs/drop-down-arrow.png').set('height', 45)
-  }
-
-  /**
    * Initializes this component's actual dialog.
    */
   initDialog () {
@@ -169,6 +189,9 @@ export default class PlayDialog {
     ).set(
       'min-width', 300
     )
+    // Set play dialog content to "Loading" so users could at least see SOMETHING
+    // while we load the required data.
+    this._dialog.setContent('<b>Loading...</b>', false)
   }
 
   /**
@@ -188,6 +211,9 @@ export default class PlayDialog {
     )
     if (slideNum === 0) {
       this._dialog.removeButton('Play')
+      if (this._dialog.config.show) {
+        this._dialog.render(true)
+      }
     } else if (slideNum === 1) {
       this._dialog.removeButton('Next')
       this._dialog.render(true)
@@ -206,19 +232,17 @@ export default class PlayDialog {
    * Registers this component's required event listeners.
    */
   registerEventListeners () {
-    const button = document.querySelector('#play-href')
+    const button = document.querySelector('#play-button')
     const dialog = this._dialog
 
     button.addEventListener('click', async e => {
       e.preventDefault()
+      dialog.set('show', true)
       await this.setPlayDialogContent()
 
       this.setDialogButtons()
-      dialog.set('show', true)
       document.querySelector('#name-input').value = ''
       document.querySelector('#name-input').focus()
-      this._selectmenu = this._getSelectMenu('#select-server')
-      this._selectmenu.render()
     })
   }
 
@@ -236,26 +260,27 @@ export default class PlayDialog {
       return
     }
 
-    // Create the static elements
-    dialog.setContent([
-      '<form id="dialog-form-1">',
-      '<div id="name-input-container">',
-      '<label for="name-input">Player Name</label><br>',
-      '<input id="name-input" placeholder="Player Name" type="text" autocomplete="off">',
-      '</div><div id="server-select-menu-container">',
-      '<label for="select-server">Pick a server</label><br>',
-      '<select id="select-server"></select>',
-      '</div></form>',
-      '<span id="error-span"></span>'
-    ].join(''), false)
-
     try {
       const servers = await this.fetcher.fetchAvailableServers()
       const serverStatuses = await this.fetcher.fetchServersStatus(servers)
+
+      // Create the static elements
+      dialog.setContent([
+        '<form id="dialog-form-1">',
+        '<div id="name-input-container">',
+        '<label for="name-input">Player Name</label><br>',
+        '<input id="name-input" placeholder="Player Name" type="text" autocomplete="off">',
+        '</div><div id="server-select-menu-container">',
+        '<label for="select-server">Pick a server</label><br>',
+        '</div></form>',
+        '<span id="error-span"></span>'
+      ].join(''), false)
+
       const dialogContent = dialog.contentContainer
-      const selectMenu = new SelectMenu(
-        dialogContent.querySelector('#select-server')
-      ).set('dropDownArrowSrc', '/imgs/drop-down-arrow.png').set('height', 45)
+      const selectMenu = new SelectMenu('server-select')
+        .set('dropDownArrowSrc', '/imgs/drop-down-arrow.png')
+        .set('renderTarget', dialogContent.querySelector('#server-select-menu-container'))
+        .set('height', 45)
       const serversAvailable = servers.serversAvailable.map(stats => {
         const serverStatus = serverStatuses[stats.serverName].status
 
