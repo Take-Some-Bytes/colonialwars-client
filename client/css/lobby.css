@@ -1,16 +1,11 @@
 /* Styles for the lobby page of Colonial Wars. */
 #content-container {
-  min-height: 100%;
-  min-width: 500px;
-  width: 35%;
-
   position: relative;
+  min-height: 100%;
+  width: 820px;
   float: left;
-
-  background-color: rgb(130, 72, 31);
-  border-color: rgb(109, 58, 2);
-
   padding: 20px;
+  background-color: rgb(172, 118, 61);
 }
 #image-container {
   min-height: 100%;
@@ -22,39 +17,37 @@
   float: left;
 }
 #header-container {
-  margin-top: 50px;
+  margin-top: 170px;
   margin-left: auto;
   margin-right: auto;
   padding: 10px;
 
-  color: rgb(235, 235, 235);
+  color: rgb(244, 244, 244);
   text-align: center;
   text-shadow: 3px 3px rgb(160, 157, 157);
   font-family: 'Raleway', sans-serif;
   font-weight: bold;
-  font-size: 1.25rem;
-}
-#body-container {
-  padding: 50px;
-  padding-bottom: 2.5rem;
 }
 #footer-container {
   position: absolute;
-  bottom: 5px;
-  width: 94%;
-  height: 30px;
+  bottom: 10px;
+  left: 20px;
+  right: 20px;
+  height: 40px;
 
-  color: rgb(235, 235, 235);
-  background-color: rgb(82, 48, 18);
+  color: rgb(244, 244, 244);
 
   text-align: center;
-  padding: 5.5px;
-  font-size: 0.8rem;
+  padding: 9px;
+  font-size: 1rem;
   font-family: Arial, Helvetica, sans-serif;
 }
 
-/* Hide the image if the viewport is smaller than 1200 pixels. */
-@media (max-width: 1200px) {
+/**
+ * Hide the image if the viewport width is smaller than 2000px,
+ * or if the viewport height is smaller than 1000px
+ */
+@media (max-width: 1850px), (max-height: 1000px) {
   #image-container {
     display: none;
   }
