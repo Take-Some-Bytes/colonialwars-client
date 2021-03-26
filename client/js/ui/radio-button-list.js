@@ -75,6 +75,7 @@ export default class RadioButtonList extends EventEmitter {
   _createElements () {
     this.listContainer = document.createElement('div')
     this.listContainer.id = `ui-radio-list-${this.name}`
+    this.listContainer.setAttribute('role', 'radiogroup')
 
     this.checkmarkSpan = document.createElement('span')
     this.checkmarkSpan.classList.add('radio-list-checkmark')
@@ -192,12 +193,13 @@ export default class RadioButtonList extends EventEmitter {
       item.classList.add(
         'radio-list-item-container',
         'ui-no-bold',
+        'ui-content',
         'ui-radius',
-        'ui-button'
+        'ui-light'
       )
       item.appendChild(document.createTextNode(opts.labelContent))
       item.appendChild(input)
-      item.appendChild(spanElem)
+      item.appendChild(spanElem.cloneNode(true))
       this._attachEventListeners(item)
     }
 

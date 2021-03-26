@@ -154,11 +154,13 @@ export default class Dialog extends EventEmitter {
       button.appendChild(buttonText)
 
       button.addEventListener('click', buttonFunc)
+      button.style.margin = '12px'
       button.classList.add(
         'ui-content',
         'ui-radius',
         'ui-button',
-        'dialog-button'
+        'ui-size-small',
+        'ui-light'
       )
       buttonGroup.appendChild(button)
     })
@@ -207,7 +209,7 @@ export default class Dialog extends EventEmitter {
     this.headerSpan = document.createElement('span')
     this.buttonPane = document.createElement('footer')
     this.closeButton = document.createElement('button')
-    this.contentContainer = document.createElement('main')
+    this.contentContainer = document.createElement('div')
   }
 
   /**
@@ -221,12 +223,7 @@ export default class Dialog extends EventEmitter {
     this.contentContainer.classList.add('dialog-content')
     this.headerSpan.classList.add('dialog-header-span')
     this.closeSpan.classList.add('dialog-close-span')
-    this.closeButton.classList.add(
-      'ui-content',
-      'ui-radius',
-      'ui-button',
-      'dialog-close-button'
-    )
+    this.closeButton.classList.add('dialog-close-button')
     this.buttonPane.classList.add(
       'ui-content',
       'dialog-button-pane'
