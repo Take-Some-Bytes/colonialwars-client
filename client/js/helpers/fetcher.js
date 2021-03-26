@@ -6,6 +6,7 @@
 import * as adapters from './adapters.js'
 
 /**
+ * @typedef {'arrayBuffer'|'blob'|'formData'|'json'|'text'} BodyTypes
  * @typedef {Object} AvailableServers
  * @prop {Array<AvailableServer>} serversAvailable
  *
@@ -33,7 +34,11 @@ import * as adapters from './adapters.js'
  * @prop {number} capacity.current
  *
  * @typedef {Object} FetcherConfig
- * @prop {import('../constants').ClientConstants} constants
+ * @prop {string} version
+ *
+ * @typedef {Object} ImageMeta
+ * @prop {Record<string, string>} tileLocations
+ * @prop {Record<string, string>} previewLocations
  */
 
 /**
@@ -45,9 +50,41 @@ export default class Fetcher {
    * @param {FetcherConfig} config Configurations.
    */
   constructor (config) {
-    const { constants } = config
+    const { version } = config
 
-    this.constants = constants
+    this.version = version
+  }
+
+  /**
+   * Fetches a resource from the specified URL.
+   * @param {string} url The URI to fetch the resource from.
+   * @returns {Promise<Response>}
+   */
+  async fetchResource (url) {
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'X-App-Version': String(this.version),
+        'X-Is-Trusted': '1',
+        'X-Requested-With': 'JavaScript::Fetch-API'
+      }
+    })
+    if (!res.ok) {
+      throw new Error(`Request failed with status code ${res.status}.`)
+    }
+
+    return res
+  }
+
+  /**
+   * Fetches a resource as the specified type.
+   * @param {BodyTypes} type The type to fetch the resposne as. Must be ``arrayBuffer``,
+   * ``blob``, ``formData``, ``json``, or ``text``.
+   * @param {string} url The URL to fetch the resource as.
+   * @returns {Promise<any>}
+   */
+  async fetchAs (type, url) {
+    return await (await this.fetchResource(url))[type]()
   }
 
   /**
@@ -55,22 +92,15 @@ export default class Fetcher {
    * @returns {Promise<AvailableServers>}
    */
   async fetchAvailableServers () {
-    const version = String(this.constants.VERSION)
-    const res = await fetch(`${window.location.origin}/xhr?for=serversAvailable`, {
-      method: 'GET',
-      headers: {
-        'X-App-Version': version,
-        'X-Is-Trusted': '1',
-        'X-Requested-With': 'JavaScript::Fetch-API'
-      }
-    })
-    if (!res.ok) {
+    try {
+      return adapters.httpResponseAdapter(
+        await this.fetchAs('json', `${window.location.origin}/xhr?for=serversAvailable`)
+      )
+    } catch (ex) {
       throw new Error(
-        'Failed to fetch available game servers!'
+        `Failed to fetch available game servers! Error is: ${ex.stack}`
       )
     }
-
-    return adapters.httpResponseAdapter(await res.json())
   }
 
   /**
@@ -80,7 +110,6 @@ export default class Fetcher {
    */
   async fetchServersStatus (servers) {
     const statuses = {}
-    const version = String(this.constants.VERSION)
     for (let i = 0; i < servers.serversAvailable.length; i++) {
       const server = servers.serversAvailable[i]
 
@@ -89,21 +118,11 @@ export default class Fetcher {
       }
 
       try {
-        const res = await fetch(`${server.location}/status-report`, {
-          method: 'GET',
-          headers: {
-            'X-App-Version': version,
-            'X-Is-Trusted': '1',
-            'X-Requested-With': 'JavaScript::Fetch-API'
-          }
-        })
-        if (!res.ok) {
-          throw new Error('Failed to fetch server status!')
-        }
-
         statuses[server.serverName] = {
           serverName: server.serverName,
-          status: adapters.httpResponseAdapter(await res.json())
+          status: adapters.httpResponseAdapter(
+            await this.fetchAs('json', `${server.location}/status-report`)
+          )
         }
       } catch (ex) {
         console.error(`Error while fetching ${server.serverName}'s status!`)
@@ -122,21 +141,14 @@ export default class Fetcher {
    * @returns {Promise<Array<GameMetaObj>>}
    */
   async fetchGamesListFrom (serverOrigin) {
-    const version = String(this.constants.VERSION)
-    const res = await fetch(`${serverOrigin}/games-stats`, {
-      method: 'GET',
-      headers: {
-        'X-App-Version': version,
-        'X-Is-Trusted': '1',
-        'X-Requested-With': 'JavaScript::Fetch-API'
-      }
-    })
-    if (!res.ok) {
+    try {
+      return adapters.httpResponseAdapter(
+        await this.fetchAs('json', `${serverOrigin}/games-stats`)
+      )
+    } catch (ex) {
       throw new Error(
         `Failed to fetch list of available games from ${serverOrigin}.`
       )
     }
-
-    return adapters.httpResponseAdapter(await res.json())
   }
 }

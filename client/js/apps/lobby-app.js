@@ -19,7 +19,7 @@ export default class LobbyApp {
   constructor () {
     this.constants = constantUtils.getConstants()
     this.fetcher = new Fetcher({
-      constants: this.constants
+      version: this.constants.VERSION
     })
 
     this.confs = {
@@ -38,6 +38,14 @@ export default class LobbyApp {
       playDialog: null,
       settingsDialog: null
     }
+    this.imageMeta = {}
+  }
+
+  /**
+   * Fetches all the metadata this app will need.
+   */
+  async fetchMeta () {
+    this.imageMeta = await this.fetcher.fetchAs('json', '/meta/images.meta.json')
   }
 
   /**
@@ -47,7 +55,8 @@ export default class LobbyApp {
     this.components.playDialog = new PlayDialog({
       constants: this.constants,
       dialogConf: this.confs.baseDialogConf,
-      fetcher: this.fetcher
+      fetcher: this.fetcher,
+      previewsPaths: this.imageMeta.previewLocations
     })
     this.components.settingsDialog = new SettingsDialog({
       constants: this.constants,
@@ -90,7 +99,8 @@ export default class LobbyApp {
   /**
    * Runs the lobby app.
    */
-  run () {
+  async run () {
+    await this.fetchMeta()
     this.displayVersion()
     this.createComponents()
     this.registerEventListeners()
