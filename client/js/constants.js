@@ -8,6 +8,8 @@
  * @prop {number} VIEWPORT_WIDTH
  * @prop {number} VIEWPORT_HEIGHT
  * @prop {string} VERSION
+ * @prop {Object} IMG_CONSTANTS
+ * @prop {string} IMG_CONSTANTS.GAME_IMAGE_DIR
  */
 
 /**
@@ -19,7 +21,10 @@ export function getConstants () {
   return {
     VIEWPORT_HEIGHT: viewportStats.height,
     VIEWPORT_WIDTH: viewportStats.width,
-    VERSION: 'v0.4.0-PRE-ALPHA'
+    VERSION: 'v0.4.1-PRE-ALPHA',
+    IMG_CONSTANTS: {
+      GAME_IMAGE_DIR: '/imgs/game-images'
+    }
   }
 }
 
