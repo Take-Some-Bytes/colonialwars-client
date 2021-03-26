@@ -3,6 +3,32 @@ Changelog for ``colonialwars-client``.
 
 The format is based on [Keep a Changelog][1], and this project adheres to [Semantic Versioning][2].
 
+## [v0.4.1] - 2021-03-26
+### Added:
+- Added a ``&display=swap`` query when fetching the Raleway font from Google fonts.
+- Added a ``.gitignore`` file so we could start using Git properly.
+- Added an image meta file, which stores metadata about images that are going to be loaded
+by this application.
+- Added a map preview for the "Plains" map.
+- Added dedicated UI styles for making UI elements a specific colour.
+- Added some ARIA roles for various elements in the app.
+### Changed:
+- Changed the appearance of the main page a bit. Now, the buttons are more square, and the
+header and footer font sizes have both been increased.
+- Changed the IDs of some elements in ``index.html``.
+- Refactored code in the ``Fetcher`` class--a lot of the shared code for fetching stuff is
+now concentrated in two functions (``fetcher.fetchResource`` and ``fetcher.fetchAs``).
+- Updated various CSS styles.
+- Updated NPM lock file version.
+- Rewrote all the CSS styles for custom select menus.
+- Radically changed how the ``SelectMenu`` class worked. Now, instead of taking an existing
+``select`` element, the ``SelectMenu`` class created a new ``select`` element, and worked with
+that instead.
+### Removed:
+- Removed all CSS classes related to "button links". Now, to make links look like buttons,
+you must use a normal button class.
+- Removed the need for a wrapper ``div`` when constructing custom select menus.
+
 ## [v0.4.0] - 2021-03-12
 ### Added:
 - Added an adapter in ``helpers/adapters.js`` to "convert" the new HTTP response body structure
@@ -55,4 +81,5 @@ custom ``EventEmitter`` implementation in place of it.
 [v0.1.0]: https://github.com/Take-Some-Bytes/colonialwars-client/tree/bec2736d782914a69f6d861e076b4e6c38487a7f
 [v0.2.0]: https://github.com/Take-Some-Bytes/colonialwars-client/tree/f3f8432130d30a28da961fb464069ea104cadca4
 [v0.3.0]: https://github.com/Take-Some-Bytes/colonialwars-client/tree/7fbb2ec25351f8369227f67332e86dec4206dc43
-[v0.4.0]: https://github.com/Take-Some-Bytes/colonialwars-client/tree/main
+[v0.4.0]: https://github.com/Take-Some-Bytes/colonialwars-client/tree/7ec1261ca2c90866ae0b7c742a4a2575e70c565c
+[v0.4.1]: https://github.com/Take-Some-Bytes/colonialwars-client/tree/main
