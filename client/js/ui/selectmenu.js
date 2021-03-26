@@ -22,13 +22,12 @@ import * as domHelpers from '../helpers/dom-helpers.js'
 export default class SelectMenu {
   /**
    * Constructor for a SelectMenu class.
-   * @param {string|HTMLSelectElement} [selectorOrElement] The CSS selector to find the selectmenu with,
-   * or the HTMLSelectElement to work with.
+   * @param {string} name A unique name to refer to this SelectMenu.
    */
-  constructor (selectorOrElement) {
-    this.selectmenu = null
-    this.selectmenuOldParent = null
+  constructor (name) {
+    this.name = name
 
+    this.selectmenu = null
     this.rendered = false
     this.keys = {
       legalKeys: ['width', 'height', 'dropDownArrowSrc', 'id', 'renderTarget', 'show'],
@@ -47,12 +46,8 @@ export default class SelectMenu {
       show: true
     }
 
-    // Selector parameter is optional.
-    if (selectorOrElement && typeof selectorOrElement === 'string') {
-      this.initWithCssSelector(selectorOrElement)
-    } else if (selectorOrElement instanceof HTMLSelectElement) {
-      this.initWithSelectElement(selectorOrElement)
-    }
+    this._createElements()
+    this._applyStyles()
   }
 
   /**
@@ -64,20 +59,28 @@ export default class SelectMenu {
   }
 
   /**
-   * Gets the select element that this class is going to modify. Returns null if the element
-   * selected is not a HTML ``<select>`` element, or if none could be found.
-   * @param {string} selector The CSS selector to find the selectmenu with.
-   * @returns {HTMLSelectElement|null}
+   * Creates the DOM elements to be manipulated.
    * @private
    */
-  _getSelectMenu (selector) {
-    const selectmenu = document.querySelector(selector)
+  _createElements () {
+    this.selectmenu = document.createElement('select')
+    this.selectmenu.id = `${this.name}-select`
 
-    if (!(selectmenu instanceof HTMLSelectElement)) {
-      return null
-    }
+    // Set the ARIA attribute for this select menu.
+    this.selectmenu.setAttribute('role', 'listbox')
+  }
 
-    return selectmenu
+  /**
+   * Applies the required styles to this SelectMenu.
+   * @private
+   */
+  _applyStyles () {
+    this.selectmenu.classList.add(
+      'ui-content',
+      'ui-radius',
+      'custom-select',
+      'ui-light'
+    )
   }
 
   /**
@@ -86,7 +89,7 @@ export default class SelectMenu {
    */
   _render () {
     if (this.config.renderTarget instanceof HTMLElement) {
-      domHelpers.render(this.wrapper, this.config.renderTarget)
+      domHelpers.render(this.selectmenu, this.config.renderTarget)
     } else {
       throw new TypeError(
         'renderTarget must be a HTMLElement to render select menu!'
@@ -95,91 +98,37 @@ export default class SelectMenu {
   }
 
   /**
-   * Initializes this select menu with the selectmenu retrieved by the specified CSS selector.
-   * @param {string} selector The CSS selector to find the selectmenu with.
+   * Sets the dynamic properties of this SelectMenu.
    * @returns {SelectMenu}
    */
-  initWithCssSelector (selector) {
-    this.selectmenu = this._getSelectMenu(selector)
-    // If the selectmenu was already initialized, skip the rest of the function.
-    if (
-      this.selectmenu &&
-      this.selectmenu.parentElement instanceof HTMLDivElement &&
-      this.selectmenu.parentElement.id === `${this.config.id || this.selectmenu.id}-wrapper` &&
-      this.selectmenu.parentElement.classList.contains('select-menu-wrapper')
-    ) {
-      return
-    }
-    this.config.renderTarget = this.selectmenu.parentElement
-    this.wrapper = this.wrapSelect(this.selectmenu, this.config.id || this.selectmenu.id)
-    this.applyStyles(this.selectmenu, this.wrapper)
-  }
+  setDynamicProps () {
+    this.selectmenu.style.height = `${this.config.dimensions.height}px`
+    this.selectmenu.style.width = `${this.config.dimensions.width}px`
 
-  /**
-   * Initializes this SelectMenu with an already existing ``select`` element
-   * @param {HTMLSelectElement} elem The HTMLSelectElement to work with.
-   */
-  initWithSelectElement (elem) {
-    if (!(elem instanceof HTMLSelectElement)) {
-      throw new TypeError('elem is not a HTMLSelectElement!')
-    }
-
-    this.selectmenu = elem
-    this.config.renderTarget = this.selectmenu.parentElement
-    this.wrapper = this.wrapSelect(this.selectmenu, this.config.id || this.selectmenu.id)
-    this.applyStyles(this.selectmenu, this.wrapper)
-  }
-
-  /**
-   * Sets the dynamic properties of this selectmenu.
-   * @param {HTMLSelectElement} selectmenu The ``<select>`` element to apply the styles to.
-   * @param {HTMLDivElement} [wrapper] The ``<div>`` element that wraps the selectmenu.
-   * @returns {SelectMenu}
-   */
-  setDynamicProps (selectmenu, wrapper) {
-    wrapper.style.height = `${this.config.dimensions.height}px`
-    wrapper.style.width = `${this.config.dimensions.width}px`
-    selectmenu.style.height = `${this.config.dimensions.height}px`
-    selectmenu.style.width = `${this.config.dimensions.width}px`
-
-    wrapper.style.display = 'block'
-    selectmenu.style.display = 'block'
+    this.selectmenu.style.display = 'block'
 
     if (this.config.dropDownArrowSrc === 'default') {
       throw new Error('Default of dropDownArrowSrc option is not available!')
     }
-    wrapper.style.backgroundImage = `url("${this.config.dropDownArrowSrc}")`
+    this.selectmenu.style.backgroundImage = `url("${this.config.dropDownArrowSrc}")`
     return this
   }
 
   /**
-   * Sets an option for this selectmenu.
-   * @param {string} id The ID of the option to modify.
-   * @param {OptionConfig} config Configurations for setting the option in the selectmenu.
+   * Gets a configuration. Does NOT re-render, obviously.
+   * @param {string} key The configuration name.
+   * @returns {any}
    */
-  setOption (id, config) {
-    let option = this.selectmenu.querySelector(`#${id}`)
-    if (!option && config.add) {
-      // If the option doesn't already exist, the user wants us to add it.
-      option = new Option(config.content, config.value, config.selected, config.selected)
-      option.id = id
-      this.selectmenu.appendChild(option)
-      return this
-    } else if (option && config.delete) {
-      domHelpers.removeChildNode(option, this.selectmenu)
-      return this
-    } else if (option && config.modify) {
-      option.selected = config.selected || option.selected
-      option.value = config.value || option.value
-      if (typeof config.content === 'string') {
-        domHelpers.removeAllChildNodes(option)
-        option.appendChild(document.createTextNode(config.content))
-      }
-      return this
+  get (key) {
+    if (!this.keys.legalKeys.includes(key)) {
+      throw new Error(
+        'Configuration does not exist!'
+      )
+    } else if (['width', 'height'].includes(key)) {
+      return this.config.dimensions[key]
+    } else {
+      return this.config[key]
     }
-    throw new Error(
-      `Failed to set option #${id}, with config ${JSON.stringify(config, null, 2)}`
-    )
   }
 
   /**
@@ -219,67 +168,39 @@ export default class SelectMenu {
   }
 
   /**
-   * Gets a configuration. Does NOT re-render, obviously.
-   * @param {string} key The configuration name.
-   * @returns {any}
+   * Sets an option for this selectmenu.
+   * @param {string} id The ID of the option to modify.
+   * @param {OptionConfig} config Configurations for setting the option in the selectmenu.
    */
-  get (key) {
-    if (!this.keys.legalKeys.includes(key)) {
-      throw new Error(
-        'Configuration does not exist!'
-      )
-    } else if (['width', 'height'].includes(key)) {
-      return this.config.dimensions[key]
-    } else {
-      return this.config[key]
-    }
-  }
-
-  /**
-   * Wraps a HTML ``<select>`` element with a ``<div>`` element. Guaranteed to
-   * return a ``<div>`` element that contains the passed ``<select>`` element.
-   * @param {HTMLSelectElement} selectmenu The ``<select>`` element to wrap.
-   * @param {string} baseID The base ID for the wrapper ``<div>`` element.
-   * @returns {HTMLDivElement}
-   */
-  wrapSelect (selectmenu, baseID) {
-    const wrapper = document.createElement('div')
-    wrapper.id = `${baseID}-wrapper`
-    wrapper.appendChild(selectmenu)
-
-    return wrapper
-  }
-
-  /**
-   * Applies the ``selectmenu`` styles to a selectmenu.
-   * @param {HTMLSelectElement} selectmenu The ``<select>`` element to apply the styles to.
-   * @param {HTMLDivElement} [wrapper] The ``<div>`` element that wraps the selectmenu.
-   * @returns {SelectMenu}
-   */
-  applyStyles (selectmenu, wrapper) {
-    if (!(wrapper instanceof HTMLDivElement)) {
-      if (!(selectmenu.parentElement instanceof HTMLDivElement)) {
-        throw new TypeError(
-          'Wrapper div element not found!'
-        )
+  setOption (id, config) {
+    let option = this.selectmenu.querySelector(`#${id}`)
+    if (!option && config.add) {
+      // If the option doesn't already exist, the user wants us to add it.
+      option = new Option(config.content, config.value, config.selected, config.selected)
+      option.id = id
+      this.selectmenu.appendChild(option)
+      return this
+    } else if (option && config.delete) {
+      domHelpers.removeChildNode(option, this.selectmenu)
+      return this
+    } else if (option && config.modify) {
+      option.selected = config.selected || option.selected
+      option.value = config.value || option.value
+      if (typeof config.content === 'string') {
+        domHelpers.removeAllChildNodes(option)
+        option.appendChild(document.createTextNode(config.content))
       }
-      wrapper = selectmenu.parentElement
+      return this
     }
-
-    wrapper.classList.add(
-      'select-menu-wrapper',
-      'ui-content',
-      'ui-radius'
+    throw new Error(
+      `Failed to set option #${id}, with config ${JSON.stringify(config, null, 2)}`
     )
-    selectmenu.classList.add('select-menu-content')
-    return this
   }
 
   /**
    * Hides this SelectMenu.
    */
   hide () {
-    this.wrapper.style.display = 'none'
     this.selectmenu.style.display = 'none'
 
     this.rendered = false
@@ -297,13 +218,12 @@ export default class SelectMenu {
       }
       return this
     } else if (this.rendered) {
-      this.setDynamicProps(this.selectmenu, this.wrapper)
+      this.setDynamicProps()
       return this
     }
-    this.wrapper.style.display = 'block'
     this.selectmenu.style.display = 'block'
 
-    this.setDynamicProps(this.selectmenu, this.wrapper)
+    this.setDynamicProps()
     this._render()
     this.rendered = true
     return this
