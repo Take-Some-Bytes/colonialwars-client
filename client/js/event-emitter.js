@@ -116,4 +116,24 @@ export default class EventEmitter {
       }
     }
   }
+
+  /**
+   * Removes all listeners from ``type``. If type is not specified,
+   * removes all listeners of all events registered on this ``emitter``.
+   * @param {string} [type] The type of the event.
+   */
+  removeAllListeners (type) {
+    if (!type) {
+      for (const key of Object.keys(this.listeners)) {
+        delete this.listeners[key]
+      }
+      return
+    }
+
+    if (!(type in this.listeners)) {
+      return
+    }
+
+    delete this.listeners[type]
+  }
 }
