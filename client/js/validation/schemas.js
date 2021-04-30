@@ -26,5 +26,9 @@ export const playInputSchemas = [
       return true
     }),
     server: validator.all(validator.string(), validator.json())
+  },
+  {
+    game: validator.all(validator.string(), validator.json()),
+    team: validator.string() /* PARTIAL */
   }
 ]

@@ -99,6 +99,22 @@ export function json () {
   }
 }
 /**
+ * Checks if a value is in an array.
+ * @param {Array<any>} arr The array to check if the value is in.
+ * @returns {ValidatorFunc}
+ */
+export function isOneOf (arr) {
+  return val => {
+    if (!arr.includes(val)) {
+      return new ValidationError(
+        'Value is not included in valid values!', 'EINVALID',
+        'Make sure you picked an allowed value.'
+      )
+    }
+  }
+}
+
+/**
  * Returns a function that checks if the value matches all the validation
  * functions that are passed in.
  * @param  {...ValidatorFunc} validators The validation functions.
