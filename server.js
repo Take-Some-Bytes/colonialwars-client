@@ -75,7 +75,10 @@ app.use('/xhr', (req, res, next) => {
         data: {
           serversAvailable: [
             // Send only one server name.
-            { serverName: 'Development 1', location: 'http://0.0.0.0:4000' }
+            // { serverName: 'Development 1', location: 'http://0.0.0.0:4000' }
+            // { serverName: 'Development 1', location: 'http://dev1.colonialwars.localhost:4000' },
+            // { serverName: 'Development 1', location: 'http://192.168.1.110:4000' }
+            { serverName: 'Development 1', location: 'http://localhost:4000' }
           ]
         }
       }))
