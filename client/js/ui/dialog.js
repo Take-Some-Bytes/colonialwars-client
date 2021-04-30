@@ -154,7 +154,7 @@ export default class Dialog extends EventEmitter {
       button.appendChild(buttonText)
 
       button.addEventListener('click', buttonFunc)
-      button.style.margin = '12px'
+      button.style.margin = '8px'
       button.classList.add(
         'ui-content',
         'ui-radius',
@@ -513,31 +513,28 @@ export default class Dialog extends EventEmitter {
 
   /**
    * Creates a new dialog.
-   * @param {import('../constants').ClientConstants} constants Client side constants.
+   * @param {import('../helpers/display-utils').ViewportDimensions} viewportDimensions
+   * The current dimensions of the viewport.
    * @param {string} name A unique name for the dialog to be created.
    * @param {Object<string, any>} config Any other configurations to apply to the dialog.
    * @returns {Dialog}
    */
-  static create (constants, name, config) {
+  static create (viewportDimensions, name, config) {
+    const { width, height } = viewportDimensions
     const dialog = new Dialog({
-      height: constants.VIEWPORT_HEIGHT,
-      width: constants.VIEWPORT_WIDTH
+      height: height,
+      width: width
     }, name)
 
     Object.keys(config).forEach(key => {
       dialog.set(key, config[key])
     })
     dialog
-      .set('width', Math.round(constants.VIEWPORT_WIDTH / 3))
-      .set('height', Math.round(constants.VIEWPORT_HEIGHT * 10 / 1.5 / 10)).set(
-        'x',
-        Math.round(constants.VIEWPORT_WIDTH / 2) - dialog.get('width') / 2
-      ).set(
-        'y',
-        Math.round(constants.VIEWPORT_HEIGHT / 2) - dialog.get('height') / 2
-      ).set(
-        'title', name
-      )
+      .set('width', Math.round(width / 3))
+      .set('height', Math.round(height * 10 / 1.5 / 10))
+      .set('x', Math.round(width / 2) - dialog.get('width') / 2)
+      .set('y', Math.round(height / 2) - dialog.get('height') / 2)
+      .set('title', name)
 
     return dialog
   }

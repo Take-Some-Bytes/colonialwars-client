@@ -10,6 +10,7 @@ import Dialog from '../ui/dialog.js'
  * @typedef {Object} SettingsDialogConfig
  * @prop {Object<string, any>} dialogConf
  * @prop {import('../constants').ClientConstants} constants
+ * @prop {import('../helpers/display-utils').ViewportDimensions} viewportDimensions
  */
 
 /**
@@ -25,10 +26,11 @@ export default class SettingsDialog {
    * @param {SettingsDialogConfig} config Configurations.
    */
   constructor (config) {
-    const { dialogConf, constants } = config
+    const { dialogConf, constants, viewportDimensions } = config
 
     this.dialogConf = dialogConf
     this.constants = constants
+    this.viewportDimensions = viewportDimensions
 
     this._dialog = null
     this.name = 'Settings'
@@ -45,7 +47,7 @@ export default class SettingsDialog {
    * Initializes this component's actual dialog.
    */
   initDialog () {
-    this._dialog = Dialog.create(this.constants, this.name, this.dialogConf)
+    this._dialog = Dialog.create(this.viewportDimensions, this.name, this.dialogConf)
   }
 
   /**
@@ -74,18 +76,11 @@ export default class SettingsDialog {
   }
 
   /**
-   * Updates this dialog's dimensions.
+   * Hides this component.
+   * @returns {Dialog}
    */
-  updateDimensions () {
-    if (!(this._dialog instanceof Dialog)) {
-      // No-op if this component's dialog is not yet initialized
-      return
-    }
-    this._dialog
-      .set('width', Math.round(this.constants.VIEWPORT_WIDTH / 3))
-      .set('height', Math.round(this.constants.VIEWPORT_HEIGHT * 10 / 1.5 / 10))
-      .set('x', Math.round(this.constants.VIEWPORT_WIDTH / 2) - this._dialog.get('width') / 2)
-      .set('y', Math.round(this.constants.VIEWPORT_HEIGHT / 2) - this._dialog.get('height') / 2)
+  hide () {
+    return this._dialog.hide()
   }
 
   /**

@@ -5,50 +5,53 @@
 
 /**
  * @typedef {Object} ClientConstants
- * @prop {number} VIEWPORT_WIDTH
- * @prop {number} VIEWPORT_HEIGHT
  * @prop {string} VERSION
  * @prop {Object} IMG_CONSTANTS
  * @prop {string} IMG_CONSTANTS.GAME_IMAGE_DIR
  */
 
 /**
- * Gets client constants.
- * @returns {ClientConstants}
- */
-export function getConstants () {
-  const viewportStats = calculateViewportstats()
-  return {
-    VIEWPORT_HEIGHT: viewportStats.height,
-    VIEWPORT_WIDTH: viewportStats.width,
-    VERSION: 'v0.4.1-PRE-ALPHA',
-    IMG_CONSTANTS: {
-      GAME_IMAGE_DIR: '/imgs/game-images'
+  * Deep-freezes an object.
+  * @param {O} object The object to deep freeze.
+  * @returns {Readonly<O>}
+  * @template O
+  */
+function deepFreeze (object) {
+  // Retrieve the property names defined on object.
+  const propNames = Object.getOwnPropertyNames(object)
+  // Freeze properties before freezing self.
+  for (const name of propNames) {
+    const value = object[name]
+    if (value && typeof value === 'object') {
+      deepFreeze(value)
     }
   }
+  return Object.freeze(object)
 }
 
-/**
- * Calculate viewport stats.
- * @returns {import("./ui/dialog").ViewportStats}
- */
-export function calculateViewportstats () {
-  return {
-    width: (() => {
-      if (window.innerWidth !== undefined) {
-        const vw = window.innerWidth
-        return vw
+const constants = deepFreeze({
+  VERSION: 'v0.5.0-PRE-ALPHA',
+  IMG_CONSTANTS: {
+    GAME_IMAGE_DIR: '/imgs/game'
+  },
+  GAME_CONSTANTS: {
+    VIEWPORT_STICKINESS: 0.004,
+    DRAWING_TILE_SIZE: 100,
+    DEFAULT_KEY_BINDINGS: {
+      directionBindings: {
+        up: ['w', 'W', 'Up', 'ArrowUp'],
+        down: ['s', 'S', 'Down', 'ArrowDown'],
+        left: ['a', 'A', 'Left', 'ArrowLeft'],
+        right: ['d', 'D', 'Right', 'ArrowRight']
       }
-      const vw = document.documentElement.clientWidth
-      return vw
-    })(),
-    height: (() => {
-      if (window.innerHeight !== undefined) {
-        const vw = window.innerHeight
-        return vw
-      }
-      const vw = document.documentElement.clientHeight
-      return vw
-    })()
+    }
+  },
+  COMMUNICATIONS: {
+    CONN_READY: 'ready',
+    CONN_UPDATE: 'update',
+    CONN_READY_ACK: 'ready-ack',
+    CONN_CLIENT_ACTION: 'client-action'
   }
-}
+})
+
+export default constants
