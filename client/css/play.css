@@ -1,0 +1,7 @@
+/* Styles for the play page of the Colonial Wars app. */
+#game-canvas {
+  display: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
