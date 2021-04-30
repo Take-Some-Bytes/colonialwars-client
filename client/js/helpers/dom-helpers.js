@@ -3,7 +3,7 @@
  * @fileoverview Functions to help the with DOM manipulation
  */
 
-import { bind } from './number-utils.js'
+import { bound } from './number-utils.js'
 
 /**
  * @typedef {Object} Bounds
@@ -100,13 +100,13 @@ export function makeDraggable (elem, draggableID, bounds) {
     clientPosX = e.clientX
     clientPosY = e.clientY
     // Set the element's new position:
-    elem.style.top = bind(
+    elem.style.top = bound(
       (elem.offsetTop - toMoveY), bounds.y.min,
       bounds.y.max - parseInt(
         elem.clientHeight, 10
       )
     ) + 'px'
-    elem.style.left = bind(
+    elem.style.left = bound(
       (elem.offsetLeft - toMoveX), bounds.x.min,
       bounds.x.max - parseInt(
         elem.clientWidth, 10

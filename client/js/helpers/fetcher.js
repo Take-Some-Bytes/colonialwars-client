@@ -35,10 +35,6 @@ import * as adapters from './adapters.js'
  *
  * @typedef {Object} FetcherConfig
  * @prop {string} version
- *
- * @typedef {Object} ImageMeta
- * @prop {Record<string, string>} tileLocations
- * @prop {Record<string, string>} previewLocations
  */
 
 /**
@@ -56,7 +52,8 @@ export default class Fetcher {
   }
 
   /**
-   * Fetches a resource from the specified URL.
+   * Fetches a resource from the specified URL. Only rejects when fetch rejects,
+   * never on an unsuccessful response status.
    * @param {string} url The URI to fetch the resource from.
    * @returns {Promise<Response>}
    */
@@ -67,11 +64,9 @@ export default class Fetcher {
         'X-App-Version': String(this.version),
         'X-Is-Trusted': '1',
         'X-Requested-With': 'JavaScript::Fetch-API'
-      }
+      },
+      credentials: 'include'
     })
-    if (!res.ok) {
-      throw new Error(`Request failed with status code ${res.status}.`)
-    }
 
     return res
   }
@@ -84,7 +79,11 @@ export default class Fetcher {
    * @returns {Promise<any>}
    */
   async fetchAs (type, url) {
-    return await (await this.fetchResource(url))[type]()
+    const res = await this.fetchResource(url)
+    if (!res.ok) {
+      throw new Error(`Failed to fetch resource with status code ${res.status}!`)
+    }
+    return await res[type]()
   }
 
   /**
