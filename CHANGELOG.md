@@ -3,6 +3,25 @@ Changelog for ``colonialwars-client``.
 
 The format is based on [Keep a Changelog][1], and this project adheres to [Semantic Versioning][2].
 
+## [v0.5.0] - 2021-04-29
+### Added:
+- Added JavaScript in ``client/js/game/`` to handle client game logic. This completes the connection
+between the game server and game client.
+- Added a ``PlayApp`` class to handle logic on the ``Play`` page.
+- Added local copies of the [Raleway](https://fonts.google.com/specimen/Raleway) in ``client/fonts``.
+- Added a sprite sheet which contained the graphics for the ``grass`` map theme.
+- Added more utility methods and class in ``client/js/helpers``.
+- Added ``emitter.removeAllListeners([type])`` in the ``EventEmitter`` class, which does the same
+thing as the ``emitter.removeAllListeners([type])`` method of the Node.JS EventEmitter.
+- Added a CWDTP client implementation.
+- Ported the [``debug``](https://www.npmjs.com/package/debug) module to our client-side.
+### Changed:
+- Renamed game image folder from ``game-images`` to ``game``.
+- Made constants static--in other words, more like actual constants. Moved the code that determined
+viewport dimensions to another class (see above).
+### Removed:
+- Removed our dependence on Google Fonts--all our fonts are now locally available
+
 ## [v0.4.1] - 2021-03-26
 ### Added:
 - Added a ``&display=swap`` query when fetching the Raleway font from Google fonts.
@@ -82,4 +101,5 @@ custom ``EventEmitter`` implementation in place of it.
 [v0.2.0]: https://github.com/Take-Some-Bytes/colonialwars-client/tree/f3f8432130d30a28da961fb464069ea104cadca4
 [v0.3.0]: https://github.com/Take-Some-Bytes/colonialwars-client/tree/7fbb2ec25351f8369227f67332e86dec4206dc43
 [v0.4.0]: https://github.com/Take-Some-Bytes/colonialwars-client/tree/7ec1261ca2c90866ae0b7c742a4a2575e70c565c
-[v0.4.1]: https://github.com/Take-Some-Bytes/colonialwars-client/tree/main
+[v0.4.1]: https://github.com/Take-Some-Bytes/colonialwars-client/tree/85cb2323d21888d9ec5f0d5095eae4f68500dd87
+[v0.5.0]: https://github.com/Take-Some-Bytes/colonialwars-server/tree/main
