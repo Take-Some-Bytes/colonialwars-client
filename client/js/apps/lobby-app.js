@@ -7,19 +7,43 @@ import Fetcher from '../helpers/fetcher.js'
 import PlayDialog from '../components/play-dialog.js'
 import SettingsDialog from '../components/settings-dialog.js'
 
-import * as constantUtils from '../constants.js'
+import constants from '../constants.js'
+
+/**
+ * @callback PlayerReadyHandler
+ * @param {PlayData} playData
+ * @returns {void|Promise<void>}
+ *
+ * @typedef {Object} PlayData
+ * @prop {string} playerName
+ * @prop {string} playerTeam
+ * @prop {string} gameID
+ * @prop {string} serverLoc
+ * @prop {string} auth
+ *
+ * @typedef {Object} LobbyAppOptions
+ * @prop {import('../helpers/display-utils').ViewportDimensions} viewportDimensions
+ * @prop {PlayerReadyHandler} onPlayerReady
+ * @prop {Record<string, any>} previewMeta
+ */
 
 /**
  * The lobby application.
  */
 export default class LobbyApp {
   /**
-   * Constructor.
+   * Constructor for a LobbyApp class.
+   * @param {LobbyAppOptions} opts Options.
    */
-  constructor () {
-    this.constants = constantUtils.getConstants()
+  constructor (opts) {
+    const {
+      previewMeta,
+      onPlayerReady,
+      viewportDimensions
+    } = opts
+
     this.fetcher = new Fetcher({
-      version: this.constants.VERSION
+      version: constants.VERSION
     })
 
     this.confs = {
@@ -27,8 +51,8 @@ export default class LobbyApp {
         renderTarget: document.querySelector('body'),
         show: false,
         isModal: true,
-        width: Math.round(this.constants.VIEWPORT_WIDTH / 3),
-        height: Math.round(this.constants.VIEWPORT_WIDTH * 10 / 1.5 / 10),
+        width: Math.round(viewportDimensions.height / 3),
+        height: Math.round(viewportDimensions.width * 10 / 1.5 / 10),
         draggable: true,
         'min-width': 240,
         'min-height': 240
@@ -38,14 +62,10 @@ export default class LobbyApp {
       playDialog: null,
       settingsDialog: null
     }
-    this.imageMeta = {}
-  }
+    this.previewMeta = previewMeta
 
-  /**
-   * Fetches all the metadata this app will need.
-   */
-  async fetchMeta () {
-    this.imageMeta = await this.fetcher.fetchAs('json', '/meta/images.meta.json')
+    this.viewportDimensions = viewportDimensions
+    this.onPlayerReady = onPlayerReady
   }
 
   /**
@@ -53,14 +73,16 @@ export default class LobbyApp {
    */
   createComponents () {
     this.components.playDialog = new PlayDialog({
-      constants: this.constants,
+      previewsPaths: this.previewMeta.previewLocations,
+      viewportDimensions: this.viewportDimensions,
       dialogConf: this.confs.baseDialogConf,
-      fetcher: this.fetcher,
-      previewsPaths: this.imageMeta.previewLocations
+      onPlayerReady: this.onPlayerReady,
+      fetcher: this.fetcher
     })
     this.components.settingsDialog = new SettingsDialog({
-      constants: this.constants,
-      dialogConf: this.confs.baseDialogConf
+      viewportDimensions: this.viewportDimensions,
+      dialogConf: this.confs.baseDialogConf,
+      constants: this.constants
     })
   }
 
@@ -72,39 +94,44 @@ export default class LobbyApp {
     const version = document.createElement('a')
 
     version.href = '/version#pre-alpha'
-    version.appendChild(document.createTextNode(`${this.constants.VERSION}.`))
+    version.appendChild(document.createTextNode(`${constants.VERSION}.`))
     footer.appendChild(document.createTextNode('Version '))
     footer.appendChild(version)
   }
 
   /**
-   * Updates both dialogs' dimensions.
+   * Initializes the lobby app.
    */
-  updateDialogDimensions () {
-    this.components.settingsDialog.updateDimensions()
-  }
-
-  /**
-   * Registers the event listeners for the lobby application.
-   */
-  registerEventListeners () {
-    window.addEventListener('resize', () => {
-      this.constants = Object.assign(
-        this.constants, constantUtils.getConstants()
-      )
-      this.updateDialogDimensions()
-    })
-  }
-
-  /**
-   * Runs the lobby app.
-   */
-  async run () {
-    await this.fetchMeta()
+  init () {
     this.displayVersion()
     this.createComponents()
-    this.registerEventListeners()
     this.components.playDialog.init()
     this.components.settingsDialog.init()
+  }
+
+  /**
+   * Shows the lobby app.
+   */
+  show () {
+    const main = document.querySelector('#content-container')
+
+    if (main instanceof HTMLElement) {
+      main.style.display = 'block'
+    }
+  }
+
+  /**
+   * Hides the lobby app.
+   */
+  hide () {
+    const main = document.querySelector('#content-container')
+
+    if (main instanceof HTMLElement) {
+      main.style.display = 'none'
+    }
+
+    Object.values(this.components).forEach(comp => {
+      comp.hide()
+    })
   }
 }
