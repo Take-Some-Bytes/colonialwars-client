@@ -54,6 +54,12 @@ export class ImageLoader {
      * @type {Map<string, InstanceType<Image>>}
      */
     this._imgCache = new Map()
+
+    /**
+     * A map of images that are currently being loaded.
+     * @type {Map<string, Promise<HTMLImageElement>>}
+     */
+    this._loadingImgs = new Map()
   }
 
   /**
@@ -66,15 +72,18 @@ export class ImageLoader {
    */
   loadImg (path, force = false) {
     debug('Fetching image from path %s', path)
+
     if (this._imgCache.has(path) && !force) {
       debug('Image fetched from cache.')
       return Promise.resolve(this._imgCache.get(path))
+    } else if (this._loadingImgs.has(path)) {
+      debug('Image already loading.')
+      return this._loadingImgs.get(path)
     }
 
-    return new Promise((resolve, reject) => {
+    const promise = new Promise((resolve, reject) => {
       const img = new Image()
       const imgPath = new URL(path, this.baseURL).pathname
-      debug(this.baseURL)
       debug('Absolute image path: %s', imgPath)
 
       img.src = imgPath
@@ -88,5 +97,12 @@ export class ImageLoader {
         resolve(img)
       })
     })
+
+    // Put the promise in the _loadingImgs map so that if the same
+    // image was requested while it was already loading, we won't duplicate
+    // our image requests.
+    this._loadingImgs.set(path, promise)
+
+    return promise
   }
 }
