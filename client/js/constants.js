@@ -30,7 +30,7 @@ function deepFreeze (object) {
 }
 
 const constants = deepFreeze({
-  VERSION: 'v0.5.0-PRE-ALPHA',
+  VERSION: 'v0.5.1-PRE-ALPHA',
   IMG_CONSTANTS: {
     GAME_IMAGE_DIR: '/imgs/game'
   },
