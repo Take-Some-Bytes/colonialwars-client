@@ -3,6 +3,12 @@ Changelog for ``colonialwars-client``.
 
 The format is based on [Keep a Changelog][1], and this project adheres to [Semantic Versioning][2].
 
+## [v0.5.1] - 2021-08-18
+### Fixed:
+- Fixed the ``ImageLoader`` class's ``.loadImg`` method: instead of firing of 10 requests for the
+same image when 10 calls to the function with the same path happens, it only fires of 1; all
+the other calls with the same path wait on that one request.
+
 ## [v0.5.0] - 2021-04-29
 ### Added:
 - Added JavaScript in ``client/js/game/`` to handle client game logic. This completes the connection
@@ -102,4 +108,5 @@ custom ``EventEmitter`` implementation in place of it.
 [v0.3.0]: https://github.com/Take-Some-Bytes/colonialwars-client/tree/7fbb2ec25351f8369227f67332e86dec4206dc43
 [v0.4.0]: https://github.com/Take-Some-Bytes/colonialwars-client/tree/7ec1261ca2c90866ae0b7c742a4a2575e70c565c
 [v0.4.1]: https://github.com/Take-Some-Bytes/colonialwars-client/tree/85cb2323d21888d9ec5f0d5095eae4f68500dd87
-[v0.5.0]: https://github.com/Take-Some-Bytes/colonialwars-server/tree/main
+[v0.5.0]: https://github.com/Take-Some-Bytes/colonialwars-client/tree/f1388103cc2f087e6222554751e3cfda515d1970
+[v0.5.1]: https://github.com/Take-Some-Bytes/colonialwars-server/tree/main
