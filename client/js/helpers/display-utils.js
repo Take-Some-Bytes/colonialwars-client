@@ -3,9 +3,9 @@
  * @fileoverview Utilities for displaying stuff to the user.
  */
 
-import EventEmitter from '../event-emitter.js'
+import EventEmitter from './event-emitter.js'
 
-import * as validator from '../validation/validator.js'
+import { ValidationError } from '../validation/validator.js'
 
 /**
  * @typedef {import('../validation/validator').ValidationError} ValidationError
@@ -44,7 +44,7 @@ export class ErrorDisplayer {
       this.elem.classList.add(cls)
     })
 
-    if (isValidationErr && error instanceof validator.ValidationError) {
+    if (isValidationErr && error instanceof ValidationError) {
       this._errorMsg = document.createTextNode(
         `${error.message} To fix this issue, ${error.toFix.toLowerCase()}`
       )
