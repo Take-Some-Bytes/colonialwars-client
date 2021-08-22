@@ -5,7 +5,7 @@
 
 import debugFactory from '../debug.js'
 
-const debug = debugFactory('colonialwars:crypto')
+const debug = debugFactory('cw-client:crypto')
 
 if (typeof window !== 'undefined' && typeof window.crypto !== 'undefined') {
   // Freeze crypto object.
@@ -73,7 +73,7 @@ export function hash (data, alg) {
   //   if (typeof require === 'function') {
   //     // Node.JS mode.
   //     const crypto = require('crypto')
-  //     const debug = require('debug')('colonialwars:crypto')
+  //     const debug = require('debug')('cw-client:crypto')
   //     // We keep this mapping here because the Node.JS crypto API accepts
   //     // different name forms for the same hash algorithm.
   // const algs = {

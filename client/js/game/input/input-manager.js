@@ -5,7 +5,7 @@
 
 import Vector2D from '../physics/vector2d.js'
 import InputTracker from './input-tracker.js'
-import EventEmitter from '../../event-emitter.js'
+import EventEmitter from '../../helpers/event-emitter.js'
 
 /**
  * @typedef {Record<string, Array<string>>} KeyBindings

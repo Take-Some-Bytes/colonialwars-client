@@ -4,7 +4,7 @@
  * what mouse buttons are pressed, and the current mouse position.
  */
 
-import EventEmitter from '../../event-emitter.js'
+import EventEmitter from '../../helpers/event-emitter.js'
 
 /**
   * @typedef {Object} InputState

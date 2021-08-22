@@ -12,7 +12,7 @@ import Player from './player.js'
 import Vector2D from './physics/vector2d.js'
 
 const { COMMUNICATIONS: communications } = constants
-const debug = debugFactory('colonialwars:client-game')
+const debug = debugFactory('cw-client:client-game')
 
 /**
  * @typedef {Object} WorldLimits

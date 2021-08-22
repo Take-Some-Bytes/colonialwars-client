@@ -7,7 +7,7 @@ import debugFactory from '../debug.js'
 import Vector2D from './physics/vector2d.js'
 import BoundEntity from './physics/bound-entity.js'
 
-const debug = debugFactory('colonialwars:player')
+const debug = debugFactory('cw-client:player')
 
 /**
  * @typedef {Object} PlayerOptions

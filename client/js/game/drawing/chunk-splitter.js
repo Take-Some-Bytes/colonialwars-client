@@ -10,7 +10,7 @@ import * as numberUtils from '../../helpers/number-utils.js'
 
 import { blobToImage } from '../../helpers/image-helpers.js'
 
-const debug = debugFactory('colonialwars:chunk-splitter')
+const debug = debugFactory('cw-client:chunk-splitter')
 
 /**
  * @typedef {Object} ChunkSplitterOptions
