@@ -119,11 +119,11 @@ export class ViewportDimensions extends EventEmitter {
 /**
  * Return the X/Y coordinates that will center an element with the specified
  * dimensions if placed using the top left corner.
- * @param {import('../components/custom-modal').Dimensions} elemDimensions
+ * @param {Record<'width'|'height', number>} elemDimensions
  * The element to calculate with.
  * @param {import('./display-utils').ViewportDimensions} vwDimensions
  * The current viewport dimensions.
- * @returns {import('../editor/physics/vector2d').Vector2DLike}
+ * @returns {Record<'x'|'y', number>}
  */
 export function centerPos (elemDimensions, vwDimensions) {
   return {
