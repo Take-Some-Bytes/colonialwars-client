@@ -5,7 +5,7 @@
 
 import EventEmitter from './event-emitter.js'
 
-import { ValidationError } from '../validation/validator.js'
+import { ValidationError } from './validator.js'
 
 /**
  * @typedef {import('../validation/validator').ValidationError} ValidationError
@@ -63,11 +63,9 @@ export class ErrorDisplayer {
     this.classes.forEach(cls => {
       this.elem.classList.remove(cls)
     })
-    console.log(this._errorMsg)
     if (this._errorMsg instanceof Text && this.elem.contains(this._errorMsg)) {
       this.elem.removeChild(this._errorMsg)
       this._errorMsg = null
-      console.log(this._errorMsg)
     }
   }
 
