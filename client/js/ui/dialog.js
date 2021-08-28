@@ -1,61 +1,70 @@
 /* eslint-env browser */
 /**
- * @fileoverview Simple class for create dialogs.
+ * @fileoverview Simple class for creating dialogs.
  */
+
+import EventEmitter from '../helpers/event-emitter.js'
+
+import { makeDraggable, removeAllChildNodes } from '../helpers/dom-helpers.js'
 
 /**
- * @typedef {Object<string, ButtonCallback>} Buttons
+ * @typedef {(
+ * 'width'|'height'|'x'|'y'|
+ * 'title'|'draggable'|'isModal'|
+ * 'show'|'renderTarget'|
+ * 'min-height'|'min-width'
+ * )} DialogConfigKeys
+ * @typedef {(e: Event) => void | Promise<void>} ButtonCallback
  *
- * @typedef {Object} ViewportStats
- * @prop {number} width
- * @prop {number} height
+ * @typedef {Object} DialogRender
+ * @prop {DocumentFragment} content
+ * @prop {'dialog-render'} type
+ * @prop {boolean} needsApply
  *
- * @callback ButtonCallback
- * @param {Event} e The event that happened (the click event).
- * @returns {void|Promise<void>}
+ * @typedef {Object} RenderedButton
+ * @prop {string} name
+ * @prop {ButtonCallback} callback
+ * @prop {HTMLButtonElement} button
+ *
  */
 
-import * as domHelpers from '../helpers/dom-helpers.js'
-import EventEmitter from '../event-emitter.js'
+// An array of the names of functions of a ``Map`` that modify the ``Map``.
+const MAP_MODIFING_KEYS = [
+  'set', 'clear', 'delete'
+]
 
 /**
  * Dialog class.
+ * @extends EventEmitter
  */
 export default class Dialog extends EventEmitter {
   /**
-   * Constructor for a Dialog class.
-   * @param {ViewportStats} viewportStats The dimensions of the viewport.
-   * @param {string} name A unique name to refer to this dialog.
+   * Create a new Dialog object.
+   *
+   * A Dialog object makes it very easy to create dialogs/modals.
+   * @param {string} name A unique name for this dialog.
    */
-  constructor (viewportStats, name) {
+  constructor (name) {
     super()
 
-    this.viewportStats = viewportStats
     this.name = name
 
-    this.rendered = false
-    this.couldBeDragged = false
-    /**
-     * Any error that was encountered.
-     * @type {*}
-     */
-    this.error = null
-    this.header = null
-    this.overlay = null
-    this.container = null
-    this.closeSpan = null
-    this.closeText = null
-    this.headerSpan = null
-    this.headerText = null
-    this.buttonPane = null
-    this.closeButton = null
-    this.contentContainer = null
+    this._dragHandle = null
+    this._parentElem = null
+    this._needsUpdate = false
 
     /**
-     * @type {Buttons}
+     * A cache of the last rendered buttons.
+     * @type {Record<string, RenderedButton>}
      */
-    this.buttons = {}
-    this.config = {
+    this._lastRenderedButtons = {}
+    /**
+     * A map of buttons to render, and their respective callbacks.
+     * @type {Map<string, ButtonCallback>}
+     * @private
+     */
+    this._buttons = new Map()
+    this._config = {
       title: 'Dialog',
       isModal: false,
       draggable: false,
@@ -74,326 +83,225 @@ export default class Dialog extends EventEmitter {
         y: 0
       }
     }
-    /**
-     * @param {MouseEvent} e
-     */
-    this.closeButtonHandler = e => {
-      e.preventDefault()
-      this.set('show', false)
-    }
-    // Define all information about setting configurations.
-    this.keys = {
-      legalKeys: [
-        'width', 'height', 'x', 'y',
-        'title', 'draggable', 'isModal',
-        'show', 'renderTarget',
-        'min-height', 'min-width'
-      ],
-      nestedKeys: [
-        'width', 'height', 'x', 'y',
-        'min-height', 'min-width'
-      ]
-    }
 
-    this._createElements()
+    /** @type {HTMLDivElement} */
+    this.container = Dialog.ELEMS.container.cloneNode()
+    /** @type {HTMLDivElement} */
+    this.contentContainer = Dialog.ELEMS.contentContainer.cloneNode()
+    /** @type {HTMLElement} */
+    this.header = Dialog.ELEMS.header.cloneNode()
+    /** @type {HTMLSpanElement} */
+    this.titleSpan = Dialog.ELEMS.titleSpan.cloneNode()
+    /** @type {HTMLElement} */
+    this.buttonPane = Dialog.ELEMS.buttonPane.cloneNode()
+
     this._init()
   }
 
   /**
-   * Gets the content of the dialog.
-   * @returns {Array<ChildNode>}
-   */
-  get content () {
-    return Array.from(
-      this.contentContainer.childNodes
-    )
-  }
-
-  /**
-   * Attaches all the elements of the dialog together.
-   * @private
-   */
-  _attachElements () {
-    try {
-      this.closeSpan.appendChild(this.closeText)
-      this.closeButton.appendChild(this.closeSpan)
-      this.headerSpan.appendChild(this.closeButton)
-      this.headerSpan.appendChild(this.headerText)
-      this.header.appendChild(this.headerSpan)
-      this.container.appendChild(this.header)
-      this.container.appendChild(this.contentContainer)
-      this.container.appendChild(this.buttonPane)
-    } catch (ex) {
-      this.error = ex
-      this.dispatchEvent('error')
-    }
-  }
-
-  /**
-   * Updates dimensions and positions of this dialog.
-   * @private
-   */
-  _updateDimensions () {
-    this.container.style.left = `${this.config.position.x}px`
-    this.container.style.top = `${this.config.position.y}px`
-    this.container.style.height = `${this.config.dimensions.height}px`
-    this.container.style.width = `${this.config.dimensions.width}px`
-  }
-
-  /**
-   * Creates the buttons.
-   * @private
-   */
-  _createButtons () {
-    const buttonGroup = document.createElement('div')
-    Object.keys(this.buttons).forEach(name => {
-      const buttonFunc = this.buttons[name]
-      const button = document.createElement('button')
-      const buttonText = document.createTextNode(name)
-
-      button.appendChild(buttonText)
-
-      button.addEventListener('click', buttonFunc)
-      button.style.margin = '8px'
-      button.classList.add(
-        'ui-content',
-        'ui-radius',
-        'ui-button',
-        'ui-size-small',
-        'ui-light'
-      )
-      buttonGroup.appendChild(button)
-    })
-
-    buttonGroup.classList.add('dialog-button-group')
-    this.buttonPane.appendChild(buttonGroup)
-  }
-
-  /**
-   * Creates dynamic HTML and Text elements and nodes.
-   * @private
-   */
-  _createDynamicElems () {
-    this.headerText = document.createTextNode(this.config.title)
-
-    this.container.id = `ui-dialog-${this.name}`
-    this.header.id = `ui-dialog-header-${this.name}`
-    this.buttonPane.id = `ui-dialog-button-pane-${this.name}`
-    this.headerSpan.id = `ui-dialog-header-span-${this.name}`
-    this.closeButton.id = `ui-dialog-close-button-${this.name}`
-    this.contentContainer.id = `ui-dialog-content-${this.name}`
-    this.closeSpan.id = `ui-dialog-close-button-span-${this.name}`
-
-    this.container.style.minHeight = `${this.config.minDimensions.height}px`
-    this.container.style.minWidth = `${this.config.minDimensions.width}px`
-    this.contentContainer.style.maxHeight =
-      `${parseInt(this.container.style.height, 10) - this.header.clientHeight - this.buttonPane.clientHeight}px`
-    this.contentContainer.style.overflow = 'auto'
-
-    if (this.config.isModal && !(this.overlay instanceof HTMLDivElement)) {
-      this.overlay = document.createElement('div')
-      this._prepareOverlay()
-    }
-  }
-
-  /**
-   * Creates the required HTML and Text nodes.
-   * @private
-   */
-  _createElements () {
-    this.closeText = document.createTextNode('x')
-
-    this.header = document.createElement('header')
-    this.container = document.createElement('div')
-    this.closeSpan = document.createElement('span')
-    this.headerSpan = document.createElement('span')
-    this.buttonPane = document.createElement('footer')
-    this.closeButton = document.createElement('button')
-    this.contentContainer = document.createElement('div')
-  }
-
-  /**
-   * Initializes this Dialog instance.
+   * Initializes this Dialog.
    * @private
    */
   _init () {
-    this.closeButton.type = 'button'
-    this.closeButton.addEventListener('click', this.closeButtonHandler)
+    const container = this.container
+    container.id = `${this.name}-dialog__container`
 
-    this.contentContainer.classList.add('dialog-content')
-    this.headerSpan.classList.add('dialog-header-span')
-    this.closeSpan.classList.add('dialog-close-span')
-    this.closeButton.classList.add('dialog-close-button')
-    this.buttonPane.classList.add(
-      'ui-content',
-      'dialog-button-pane'
-    )
-    this.container.classList.add(
-      'ui-content',
-      'ui-radius',
-      'dialog-container'
-    )
-    this.header.classList.add(
-      'dialog-header',
-      'ui-content',
-      'ui-radius'
-    )
-
-    this.dispatchEvent('initialized')
+    container.appendChild(this._initHeader())
+    container.appendChild(this._initContent())
+    container.appendChild(this._initButtonPane())
   }
 
   /**
-   * Makes this dialog draggable, if needed.
+   * Initializes and returns the dialog header.
+   * @returns {HTMLElement}
    * @private
    */
-  _makeDraggable () {
-    if (this.config.draggable) {
-      this.header.style.cursor = 'move'
-      if (!this.couldBeDragged) {
-        this.couldBeDragged = domHelpers.makeDraggable(
-          this.container, this.header.id, {
-            x: {
-              min: 0, max: this.viewportStats.width
-            },
-            y: {
-              min: 0, max: this.viewportStats.height
-            }
-          }
-        )
-      }
-    } else {
-      this.header.style.cursor = 'default'
-    }
+  _initHeader () {
+    const header = this.header
+    const headerSpan = this.titleSpan
+    header.id = `${this.name}-dialog__header`
+    headerSpan.id = `${this.name}-dialog__header__title-span`
+
+    header.appendChild(headerSpan)
+    header.appendChild(this._initCloseButton())
+
+    return header
   }
 
   /**
-   * Private method for rendering this dialog.
+   * Initialize and return the dialog close button.
+   * @returns {HTMLButtonElement}
    * @private
    */
-  _render () {
-    if (this.config.renderTarget instanceof HTMLElement) {
-      domHelpers.render(this.container, this.config.renderTarget)
-      if (this.config.isModal && this.overlay instanceof HTMLDivElement) {
-        domHelpers.render(this.overlay, this.config.renderTarget)
-      }
-    } else {
-      throw new TypeError(
-        'renderTarget must be a HTMLElement in order for this dialog to render!'
-      )
-    }
+  _initCloseButton () {
+    const closeButton = Dialog.ELEMS.closeButton.cloneNode()
+    const closeSpan = Dialog.ELEMS.closeSpan.cloneNode()
+    const closeTxt = Dialog.ELEMS.closeText.cloneNode()
+
+    closeSpan.id = `${this.name}-dialog__close-button__x-span`
+    closeButton.id = `${this.name}-dialog__close-button`
+    closeButton.type = 'button'
+
+    closeButton.addEventListener('click', e => {
+      this.dispatchEvent('closeButtonClick', e)
+    })
+
+    closeSpan.appendChild(closeTxt)
+    closeButton.appendChild(closeSpan)
+
+    return closeButton
   }
 
   /**
-   * Resets this dialog's position and dimensions.
+   * Initializes and returns the dialog content container.
+   * @returns {HTMLDivElement}
    * @private
    */
-  _reset () {
-    domHelpers.removeAllChildNodes(this.headerSpan)
-    domHelpers.removeAllChildNodes(this.buttonPane)
+  _initContent () {
+    const contentContainer = this.contentContainer
+    contentContainer.id = `${this.name}-dialog__content__container`
 
-    try {
-      this._updateDimensions()
-    } catch (ex) {
-      this.rendered = false
-      this.error = ex
-      this.dispatchEvent('error')
-    }
+    return contentContainer
   }
 
   /**
-   * Prepares this dialog for rendering.
+   * Initializes and returns the dialog button pane.
+   * @returns {HTMLElement}
    * @private
    */
-  _prepareDialog () {
-    this._reset()
-    this._createDynamicElems()
-    this._createButtons()
-    this._attachElements()
+  _initButtonPane () {
+    const buttonPane = this.buttonPane
+    buttonPane.id = `${this.name}-dialog__button-pane`
+
+    return buttonPane
   }
 
   /**
-   * Prepares the dialog overlay, if the dialog is supposed to be a modal.
-   * @private
+   * A map of buttons to render, and their respective callbacks.
+   * @type {Map<string, (e: Event) => void | Promise<void>>}
    */
-  _prepareOverlay () {
-    if (this.config.isModal) {
-      if (this.overlay instanceof HTMLDivElement) {
-        this.overlay.style.zIndex = '100'
-        this.overlay.style.display = 'block'
-        if (!this.overlay.classList.contains('ui-overlay')) {
-          this.overlay.classList.add('ui-overlay')
+  get buttons () {
+    const self = this
+
+    // Capture calls to ``this.buttons.set`` so we know we have to re-render.
+    return new Proxy(this._buttons, {
+      get (target, key, receiver) {
+        const prop = Reflect.get(target, key, receiver)
+        if (typeof prop !== 'function' || !MAP_MODIFING_KEYS.includes(prop.name)) {
+          // Let it through.
+          return prop
+        }
+
+        return function (...args) {
+          self._needsUpdate = true
+          return prop.call(target, ...args)
         }
       }
-    }
+    })
   }
 
   /**
-   * Gets a configuration. Does NOT re-render, obviously.
-   * @param {string} key The configuration name.
+   * Render a group of buttons for this Dialog.
+   * @returns {HTMLDivElement}
+   * @private
+   */
+  _renderButtonGroup () {
+    const buttonGroup = Dialog.ELEMS.buttonGroup.cloneNode()
+
+    for (const [name, callback] of this._buttons.entries()) {
+      const rendered = this._lastRenderedButtons[name]
+      if (!rendered) {
+        // Hasn't been rendered before. Render it.
+        const button = document.createElement('button')
+        const buttonTxt = document.createTextNode(name)
+
+        button.appendChild(buttonTxt)
+
+        button.addEventListener('click', callback)
+        button.style.margin = '0.4rem'
+        button.classList.add(
+          'ui-content',
+          'ui-content--radius',
+          'ui-button',
+          'ui-button--small',
+          'ui-light'
+        )
+        buttonGroup.appendChild(button)
+
+        // Cache the rendered button.
+        this._lastRenderedButtons[name] = {
+          button: button.cloneNode(true),
+          callback,
+          name
+        }
+        continue
+      }
+
+      // Button has been rendered.
+      if (rendered.callback !== callback) {
+        // Replace the button callback.
+        rendered.callback = callback
+      }
+      rendered.button.addEventListener('click', rendered.callback)
+      buttonGroup.appendChild(rendered.button)
+
+      rendered.button = rendered.button.cloneNode(true)
+    }
+
+    // Prune old buttons from button cache.
+    this._lastRenderedButtons = Object.fromEntries(
+      Object.entries(this._lastRenderedButtons)
+        .filter(([key]) => this._buttons.has(key))
+    )
+
+    return buttonGroup
+  }
+
+  /**
+   * Render this Dialog's modal overlay.
+   * @returns {HTMLDivElement}
+   * @private
+   */
+  _renderOverlay () {
+    const overlay = Dialog.ELEMS.overlay.cloneNode()
+    overlay.id = `${this.name}-dialog__overlay`
+
+    return overlay
+  }
+
+  /**
+   * Gets a configuration.
+   * @param {DialogConfigKeys} key The configuration name.
    * @returns {any}
    */
   get (key) {
-    if (!this.keys.legalKeys.includes(key)) {
+    if (Dialog.CONFIG_KEYS.legalKeys.includes(key)) {
       throw new Error(
         'Configuration does not exist!'
       )
     } else if (['width', 'height'].includes(key)) {
-      return this.config.dimensions[key]
+      return this._config.dimensions[key]
     } else if (['x', 'y'].includes(key)) {
-      return this.config.position[key]
+      return this._config.position[key]
     } else {
-      return this.config[key]
+      return this._config[key]
     }
   }
 
   /**
-   * Hides this dialog.
-   * @returns {Dialog}
-   */
-  hide () {
-    if (this.config.isModal && this.overlay instanceof HTMLDivElement) {
-      domHelpers.removeChildNode(this.overlay, this.config.renderTarget)
-    }
-    this.container.style.display = 'none'
-    this.rendered = false
-    this.dispatchEvent('hidden')
-    return this
-  }
-
-  /**
-   * Refreshes the current buttons that are in the dialog.
-   * @returns {Dialog}
-   */
-  refreshButtons () {
-    domHelpers.removeAllChildNodes(this.buttonPane)
-    this._createButtons()
-    return this
-  }
-
-  /**
-   * Removes a button.
-   * @param {string} name The name of the button.
-   * @returns {Dialog}
-   */
-  removeButton (name) {
-    delete this.buttons[name]
-    return this
-  }
-
-  /**
-   * Sets a configuration. Re-renders as needed.
-   * @param {string} key The configuration name.
+   * Sets a configuration.
+   * @param {DialogConfigKeys} key The configuration name.
    * @param {any} val The value to set.
    * @returns {Dialog}
    */
   set (key, val) {
-    if (!this.keys.legalKeys.includes(key)) {
+    if (!Dialog.CONFIG_KEYS.legalKeys.includes(key)) {
       throw new TypeError(
         'Invalid configuration key!'
       )
     }
 
-    if (this.keys.nestedKeys.includes(key)) {
+    if (Dialog.CONFIG_KEYS.nestedKeys.includes(key)) {
       // Actual configuration is nested inside other objects,
       // so it receives special treatment.
       // Also, all nested keys expect number values.
@@ -404,138 +312,210 @@ export default class Dialog extends EventEmitter {
       }
 
       if (['width', 'height'].includes(key)) {
-        this.config.dimensions[key] = val
+        this._config.dimensions[key] = val
       } else if (['x', 'y'].includes(key)) {
-        this.config.position[key] = val
+        this._config.position[key] = val
       } else if (['min-width', 'min-height'].includes(key)) {
-        this.config.minDimensions[key.substring(4)] = val
+        this._config.minDimensions[key.slice(4)] = val
       }
     } else {
-      this.config[key] = val
+      this._config[key] = val
     }
 
-    if (this.config.renderTarget instanceof HTMLElement) {
-      // If renderTarget is set, we must re-render.
-      this.render()
-    }
-    return this
-  }
+    this._needsUpdate = true
 
-  /**
-   * Sets a button. If the button exists, overwrite it. If it doesn't, add it.
-   * @param {string} name The name of the button.
-   * @param {ButtonCallback} callback The function to call when the button is pressed.
-   * @returns {Dialog}
-   */
-  setButton (name, callback) {
-    try {
-      if (typeof name !== 'string') {
-        throw new TypeError(
-          'Name parameter must be a string!'
-        )
-      } else if (typeof callback !== 'function') {
-        throw new TypeError(
-          'Callback parameter must be a function!'
-        )
-      }
-
-      this.buttons[name] = callback
-    } catch (ex) {
-      this.error = ex
-      this.dispatchEvent('error')
-    }
     return this
   }
 
   /**
    * Sets the content of the dialog.
-   * @param {string|Node} content The content to set.
+   * @param {Node} content The content to set.
    * @param {boolean} [append=true] Whether to append the content onto existing elements.
    * @returns {Dialog}
    */
   setContent (content, append = true) {
     if (!append) {
-      domHelpers.removeAllChildNodes(this.contentContainer)
+      removeAllChildNodes(this.contentContainer)
     }
 
-    if (typeof content === 'string') {
-      this.contentContainer.insertAdjacentHTML(
-        'afterbegin', content
-      )
-    } else if (content instanceof Node) {
-      this.contentContainer.appendChild(content)
-    }
+    this.contentContainer.appendChild(content)
     return this
   }
 
   /**
-   * Renders this dialog.
-   * @param {boolean} force Whether to force the render.
+   * Update the position, dimensions, minimum dimensions, buttons, title and
+   * visibility  of this dialog. The overlay is also added if the dialog is a
+   * modal, and  removed otherwise. Draggability is also added or removed in
+   * this function.
+   * @prop {Record<'width'|'height', number} vwDimensions The current viewport
+   * dimensions
    * @returns {Dialog}
    */
-  render (force) {
-    try {
-      if (!this.config.show && !force) {
-        if (this.rendered) {
-          this.hide()
-        }
-        return this
-      } else if (this.rendered && !force) {
-        // If dialog is already rendered, user probably wants to change
-        // height or width (or x or y). In that case, do it.
-        this._updateDimensions()
-        return this
-      }
-      this._prepareDialog()
-      this._render()
-      this._makeDraggable()
-      this.rendered = true
-      this.dispatchEvent('rendered')
-      return this
-    } catch (ex) {
-      this.rendered = false
-      this.error = ex
-      this.dispatchEvent('error')
-      return this
+  update (vwDimensions) {
+    // Update the position, dimensions, and minimum dimensions of the container.
+    const container = this.container
+    container.style.top = `${this._config.position.y}px`
+    container.style.left = `${this._config.position.x}px`
+    container.style.width = `${this._config.dimensions.width}px`
+    container.style.height = `${this._config.dimensions.height}px`
+    container.style.minWidth = `${this._config.minDimensions.width}px`
+    container.style.minHeight = `${this._config.minDimensions.height}px`
+
+    // Update title.
+    removeAllChildNodes(this.titleSpan)
+    this.titleSpan.appendChild(document.createTextNode(this._config.title))
+
+    // Update container visibility.
+    if (this._config.show) {
+      // Show the dialog.
+      container.style.display = 'flex'
+    } else {
+      // Don't show the dialog.
+      container.style.display = 'none'
     }
+
+    // Re-render buttons.
+    removeAllChildNodes(this.buttonPane)
+    this.buttonPane.appendChild(this._renderButtonGroup())
+
+    // Make the element draggable... or not.
+    if (this._config.draggable) {
+      if (!this._dragHandle) {
+        console.log('making draggable')
+        this.header.style.cursor = 'move'
+        this._dragHandle = makeDraggable(
+          container, `${this.name}-dialog__header`,
+          {
+            x: { min: 0, max: vwDimensions.width },
+            y: { min: 0, max: vwDimensions.height }
+          }
+        )
+      }
+    } else {
+      if (this._dragHandle.undrag) {
+        this.header.style.cursor = 'auto'
+        this._dragHandle.undrag()
+      }
+    }
+
+    // Add or remove overlay.
+    // Only add/remove overlay if the dialog has been attached to a parent element.
+    if (!(this._parentElem instanceof HTMLElement)) {
+      return
+    }
+
+    const oldOverlay = this._parentElem.querySelector(
+      `#${this.name}-dialog__overlay`
+    )
+    if (oldOverlay) {
+      if (this._config.show && this._config.isModal) {
+        // Leave the overlay.
+        return
+      }
+      // Remove the overlay.
+      this._parentElem.removeChild(oldOverlay)
+      return
+    }
+
+    if (!this._config.show || !this._config.isModal) {
+      // Don't show the overlay.
+      return
+    }
+    // Render the overlay.
+    this._parentElem.appendChild(this._renderOverlay())
   }
 
   /**
-   * Overrides the default action when the close button (the ``x`` button) is pressed.
-   * @param {import('../event-emitter').ListeningListener} handler The handler
-   * for the event.
-   */
-  onCloseButtonClick (handler) {
-    this.closeButton.removeEventListener('click', this.closeButtonHandler)
-    this.closeButtonHandler = handler
-    this.closeButton.addEventListener('click', this.closeButtonHandler)
-  }
-
-  /**
-   * Creates a new dialog.
-   * @param {import('../helpers/display-utils').ViewportDimensions} viewportDimensions
-   * The current dimensions of the viewport.
-   * @param {string} name A unique name for the dialog to be created.
-   * @param {Object<string, any>} config Any other configurations to apply to the dialog.
+   * Attaches this Dialog to a parent element. The dialog overlay will also be
+   * attached onto the specified parent element.
+   * @param {HTMLElement} parent The element to attach to.
    * @returns {Dialog}
    */
-  static create (viewportDimensions, name, config) {
-    const { width, height } = viewportDimensions
-    const dialog = new Dialog({
-      height: height,
-      width: width
-    }, name)
+  attach (parent) {
+    this._parentElem = parent
+    if (this._config.isModal && this._config.show) {
+      // Render the overlay.
+      this._parentElem.appendChild(this._renderOverlay())
+    }
+    this._parentElem.appendChild(this.container)
 
-    Object.keys(config).forEach(key => {
-      dialog.set(key, config[key])
-    })
-    dialog
-      .set('width', Math.round(width / 3))
-      .set('height', Math.round(height * 10 / 1.5 / 10))
-      .set('x', Math.round(width / 2) - dialog.get('width') / 2)
-      .set('y', Math.round(height / 2) - dialog.get('height') / 2)
-      .set('title', name)
-
-    return dialog
+    return this
   }
+}
+
+Dialog.CONFIG_KEYS = {
+  legalKeys: [
+    'width', 'height', 'x', 'y',
+    'title', 'draggable', 'isModal',
+    'show', 'renderTarget',
+    'min-height', 'min-width'
+  ],
+  nestedKeys: [
+    'width', 'height', 'x', 'y',
+    'min-height', 'min-width'
+  ]
+}
+
+// Initialize all needed dialog elements.
+Dialog.ELEMS = {
+  closeText: document.createTextNode('x'),
+  header: (() => {
+    const header = document.createElement('header')
+    header.classList.add(
+      'dialog__header',
+      'ui-content',
+      'ui-content--radius'
+    )
+    return header
+  })(),
+  container: (() => {
+    const container = document.createElement('div')
+    container.classList.add(
+      'ui-content',
+      'ui-content--radius',
+      'dialog'
+    )
+    return container
+  })(),
+  contentContainer: (() => {
+    const container = document.createElement('div')
+    container.classList.add('dialog__content')
+    return container
+  })(),
+  closeSpan: (() => {
+    const closeSpan = document.createElement('span')
+    closeSpan.classList.add('dialog__close-span')
+    return closeSpan
+  })(),
+  titleSpan: (() => {
+    const headerSpan = document.createElement('span')
+    headerSpan.classList.add('dialog__header__title-span')
+    return headerSpan
+  })(),
+  buttonPane: (() => {
+    const buttonPane = document.createElement('footer')
+    buttonPane.classList.add(
+      'ui-content',
+      'dialog__button-pane'
+    )
+    return buttonPane
+  })(),
+  closeButton: (() => {
+    const closeButton = document.createElement('button')
+    closeButton.type = 'button'
+    closeButton.classList.add('dialog__close-button')
+    return closeButton
+  })(),
+  overlay: (() => {
+    const overlay = document.createElement('div')
+    overlay.style.zIndex = '100'
+    overlay.style.display = 'block'
+    overlay.classList.add('dialog__overlay')
+    return overlay
+  })(),
+  buttonGroup: (() => {
+    const buttonGroup = document.createElement('div')
+    buttonGroup.classList.add('dialog__button-group')
+    return buttonGroup
+  })()
 }

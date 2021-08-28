@@ -1,10 +1,10 @@
 /* eslint-env browser */
 /**
- * @fileoverview Selectmenu class to control the appearances of the native
+ * @fileoverview Selectmenu class to control the appearance of the native
  * HTML select menu.
  */
 
-import * as domHelpers from '../helpers/dom-helpers.js'
+import { removeAllChildNodes } from '../helpers/dom-helpers.js'
 
 /**
  * @typedef {Object} OptionConfig
@@ -17,37 +17,18 @@ import * as domHelpers from '../helpers/dom-helpers.js'
  */
 
 /**
- * SelectMenu class.
+ * Selectmenu class.
  */
-export default class SelectMenu {
+export default class Selectmenu {
   /**
-   * Constructor for a SelectMenu class.
-   * @param {string} name A unique name to refer to this SelectMenu.
+   * Create a new Selectmenu object.
+   *
+   * A Selectmenu object allows for easy manipulation and styling of the native
+   * HTML ``<select>`` element.
+   * @param {HTMLSelectElement} selectElem The HTML select element to work with.
    */
-  constructor (name) {
-    this.name = name
-
-    this.selectmenu = null
-    this.rendered = false
-    this.keys = {
-      legalKeys: ['width', 'height', 'dropDownArrowSrc', 'id', 'renderTarget', 'show'],
-      nestedKeys: ['width', 'height']
-    }
-    this.config = {
-      dimensions: {
-        width: 280,
-        height: 40
-      },
-      // Currently, the default of the next option throws an error, but later
-      // on, it probably will not.
-      dropDownArrowSrc: 'default',
-      id: null,
-      renderTarget: null,
-      show: true
-    }
-
-    this._createElements()
-    this._applyStyles()
+  constructor (selectElem) {
+    this._select = selectElem
   }
 
   /**
@@ -55,116 +36,73 @@ export default class SelectMenu {
    * @returns {string}
    */
   get selected () {
-    return this.selectmenu.value
+    return this._select.value
   }
 
   /**
-   * Creates the DOM elements to be manipulated.
-   * @private
+   * Apply the required styles to this Selectmenu's select element.
+   *
+   * This method applies the ``custom-select``, ``ui-content``,
+   * ``ui-content--radius``, and ``ui-content--light`` styles.
    */
-  _createElements () {
-    this.selectmenu = document.createElement('select')
-    this.selectmenu.id = `${this.name}-select`
-
-    // Set the ARIA attribute for this select menu.
-    this.selectmenu.setAttribute('role', 'listbox')
-  }
-
-  /**
-   * Applies the required styles to this SelectMenu.
-   * @private
-   */
-  _applyStyles () {
-    this.selectmenu.classList.add(
-      'ui-content',
-      'ui-radius',
+  applyStyles () {
+    this._select.classList.add(
       'custom-select',
-      'ui-light'
+      'ui-content',
+      'ui-content--radius',
+      'ui-content--light'
     )
   }
 
   /**
-   * Private ``_render()`` method.
-   * @private
+   * Set or get the width of this Selectmenu, in pixels.
+   * @param {number} [width] The width to give the select element.
+   * @returns {number}
    */
-  _render () {
-    if (this.config.renderTarget instanceof HTMLElement) {
-      domHelpers.render(this.selectmenu, this.config.renderTarget)
-    } else {
-      throw new TypeError(
-        'renderTarget must be a HTMLElement to render select menu!'
-      )
+  width (width) {
+    if (typeof width === 'number' && !isNaN(width) && isFinite(width)) {
+      this._select.style.width = `${width}px`
     }
+    return width || parseInt(this._select.style.width, 10)
   }
 
   /**
-   * Sets the dynamic properties of this SelectMenu.
-   * @returns {SelectMenu}
+   * Set or get the height of this Selectmenu.
+   * @param {number} [height] The height to give the select element.
+   * @returns {number}
    */
-  setDynamicProps () {
-    this.selectmenu.style.height = `${this.config.dimensions.height}px`
-    this.selectmenu.style.width = `${this.config.dimensions.width}px`
-
-    this.selectmenu.style.display = 'block'
-
-    if (this.config.dropDownArrowSrc === 'default') {
-      throw new Error('Default of dropDownArrowSrc option is not available!')
+  height (height) {
+    if (typeof height === 'number' && !isNaN(height) && isFinite(height)) {
+      this._select.style.height = `${height}px`
     }
-    this.selectmenu.style.backgroundImage = `url("${this.config.dropDownArrowSrc}")`
-    return this
+    return height || parseInt(this._select.style.height, 10)
   }
 
   /**
-   * Gets a configuration. Does NOT re-render, obviously.
-   * @param {string} key The configuration name.
-   * @returns {any}
+   * Set or get the drop down arrow source of this Selectmenu.
+   * @param {string} [src] The drop down arrow source to give the select element.
+   * @returns {string}
    */
-  get (key) {
-    if (!this.keys.legalKeys.includes(key)) {
-      throw new Error(
-        'Configuration does not exist!'
-      )
-    } else if (['width', 'height'].includes(key)) {
-      return this.config.dimensions[key]
-    } else {
-      return this.config[key]
+  dropDownArrowSrc (src) {
+    if (typeof src === 'string') {
+      this._select.style.backgroundImage = `url("${src}")`
     }
+    return src || this._select.style.backgroundImage.slice(5, -2)
   }
 
   /**
-   * Sets a configuration value. Always re-renders.
-   * @param {string} key The key of the configuration.
-   * @param {any} val The value to set it to.
-   * @returns {SelectMenu}
+   * Set or get whether this Selectmenu is being shown.
+   * @param {boolean} [shown] Whether to show the select element.
+   * @returns {boolean}
    */
-  set (key, val) {
-    if (!this.keys.legalKeys.includes(key)) {
-      throw new TypeError(
-        'Invalid configuration key!'
-      )
+  shown (shown) {
+    if (typeof shown === 'boolean') {
+      this._select.style.display = shown
+        ? 'block'
+        : 'none'
     }
 
-    if (this.keys.nestedKeys.includes(key)) {
-      // Configuration is nested inside an object.
-      // All nested keys expect number values.
-      if (typeof val !== 'number') {
-        throw new TypeError(
-          `Expected val to be type of number, received type ${typeof val}.`
-        )
-      }
-
-      if (['width', 'height'].includes(key)) {
-        this.config.dimensions[key] = val
-      }
-    } else {
-      this.config[key] = val
-    }
-
-    if (this.config.renderTarget instanceof HTMLElement) {
-      this.render()
-    }
-
-    return this
+    return shown || this._select.style.display === 'block'
   }
 
   /**
@@ -173,21 +111,21 @@ export default class SelectMenu {
    * @param {OptionConfig} config Configurations for setting the option in the selectmenu.
    */
   setOption (id, config) {
-    let option = this.selectmenu.querySelector(`#${id}`)
+    let option = this._select.querySelector(`#${id}`)
     if (!option && config.add) {
       // If the option doesn't already exist, the user wants us to add it.
       option = new Option(config.content, config.value, config.selected, config.selected)
       option.id = id
-      this.selectmenu.appendChild(option)
+      this._select.appendChild(option)
       return this
     } else if (option && config.delete) {
-      domHelpers.removeChildNode(option, this.selectmenu)
+      this._select.removeChild(option)
       return this
     } else if (option && config.modify) {
       option.selected = config.selected || option.selected
       option.value = config.value || option.value
       if (typeof config.content === 'string') {
-        domHelpers.removeAllChildNodes(option)
+        removeAllChildNodes(option)
         option.appendChild(document.createTextNode(config.content))
       }
       return this
@@ -198,34 +136,19 @@ export default class SelectMenu {
   }
 
   /**
-   * Hides this SelectMenu.
+   * Disables the option with ID ``id``. Returns true if successful, false
+   * otherwise.
+   * @param {string} id The ID of the option to disable.
+   * @returns {boolean}
    */
-  hide () {
-    this.selectmenu.style.display = 'none'
-
-    this.rendered = false
-    return this
-  }
-
-  /**
-   * Renders this select menu.
-   * @returns {SelectMenu}
-   */
-  render () {
-    if (!this.config.show) {
-      if (this.rendered) {
-        this.hide()
-      }
-      return this
-    } else if (this.rendered) {
-      this.setDynamicProps()
-      return this
+  disableOption (id) {
+    const option = this._select.querySelector(`#${id}`)
+    if (!(option instanceof HTMLOptionElement)) {
+      // Option doesn't exist.
+      return false
     }
-    this.selectmenu.style.display = 'block'
 
-    this.setDynamicProps()
-    this._render()
-    this.rendered = true
-    return this
+    option.disabled = true
+    return true
   }
 }

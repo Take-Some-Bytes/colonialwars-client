@@ -4,10 +4,12 @@
  * of radio buttons.
  */
 
-import * as domHelpers from '../helpers/dom-helpers.js'
-import EventEmitter from '../event-emitter.js'
+import { removeAllChildNodes } from '../helpers/dom-helpers.js'
+import EventEmitter from '../helpers/event-emitter.js'
 
 /**
+ * @typedef {'itemWidth'|'itemHeight'|'show'} RadioButtonConfigKeys
+ *
  * @typedef {Object} RadioButtonOptions
  * @prop {string} value
  * @prop {string} labelContent
@@ -25,39 +27,28 @@ export default class RadioButtonList extends EventEmitter {
    */
   constructor (name) {
     super()
+
     this.name = name
 
-    this.listContainer = null
-    this.checkmarkSpan = null
-    this.rendered = false
-    this.keys = {
-      legalKeys: ['itemWidth', 'itemHeight', 'renderTarget', 'show']
-    }
-    this.config = {
-      show: true,
+    this._needsUpdate = false
+    this._config = {
       itemWidth: 200,
       itemHeight: 40,
-      renderTarget: null
+      show: false
     }
 
-    this._createElements()
-  }
+    /** @type {HTMLDivElement} */
+    this.listContainer = RadioButtonList.ELEMS.listContainer.cloneNode()
 
-  /**
-   * Gets the selected value.
-   * @returns {string}
-   */
-  get selected () {
-    return this.listContainer.querySelector(`input[name=${this.name}]:checked`).value
+    this._init()
   }
 
   /**
    * Attaches the required event listeners for the specified list item.
-   * @param {HTMLLabelElement} item The item to attach event listeners to.
+   * @param {HTMLLabelElement} label The item to attach event listeners to.
    * @private
    */
-  _attachEventListeners (item) {
-    const label = item
+  _attachEventListeners (label) {
     const itemInput = label.querySelector('input')
     label.addEventListener('input', () => {
       this.dispatchEvent('change', {
@@ -69,115 +60,101 @@ export default class RadioButtonList extends EventEmitter {
   }
 
   /**
-   * Creates the required HTML and Text nodes.
+   * Initialize this RadioButtonList.
    * @private
    */
-  _createElements () {
-    this.listContainer = document.createElement('div')
-    this.listContainer.id = `ui-radio-list-${this.name}`
-    this.listContainer.setAttribute('role', 'radiogroup')
-
-    this.checkmarkSpan = document.createElement('span')
-    this.checkmarkSpan.classList.add('radio-list-checkmark')
+  _init () {
+    this.listContainer.id = `radio-list-${this.name}`
   }
 
   /**
-   * Sets dynamic properties.
-   * @private
+   * Attaches this RadioButtonList to the specified parent node.
+   * @param {Element} parent The parent node to attach to.
+   * @returns {RadioButtonList}
    */
-  _setDynamicProps () {
-    const listItems = Array.from(this.listContainer.children)
-    const len = listItems.length
-    for (let i = 0; i < len; i++) {
-      const item = listItems[i]
-      if (item instanceof HTMLLabelElement) {
-        item.style.width = `${this.config.itemWidth}px`
-        item.style.height = `${this.config.itemHeight}px`
+  attach (parent) {
+    parent.appendChild(this.listContainer)
+    return this
+  }
+
+  /**
+   * Update dimensions and visibility of this RadioButtonList.
+   * @returns {RadioButtonList}
+   */
+  update () {
+    if (!this._needsUpdate) {
+      // Doesn't need an update.
+      return
+    }
+    for (const item of this.listContainer.children) {
+      if (!(item instanceof HTMLLabelElement)) {
+        // Only modify label elements.
+        continue
       }
+      item.style.width = `${this._config.itemWidth}px`
+      item.style.height = `${this._config.itemHeight}px`
     }
-  }
 
-  /**
-   * Private ``_render()`` method.
-   * @private
-   */
-  _render () {
-    if (this.config.renderTarget instanceof HTMLElement) {
-      domHelpers.render(this.listContainer, this.config.renderTarget)
+    // Now, either show or hide the radio button list.
+    if (this._config.show) {
+      this.listContainer.style.display = 'block'
     } else {
-      throw new TypeError(
-        'renderTarget must be a HTMLElement to render radio button list!'
-      )
+      this.listContainer.style.display = 'none'
     }
-  }
 
-  /**
-   * Hides this RadioButtonList.
-   */
-  hide () {
-    this.listContainer.style.display = 'none'
-
-    this.rendered = false
     return this
   }
 
   /**
    * Gets a configuration. Does NOT re-render, obviously.
-   * @param {string} key The configuration name.
+   * @param {RadioButtonConfigKeys} key The configuration name.
    * @returns {any}
    */
   get (key) {
-    if (!this.keys.legalKeys.includes(key)) {
+    if (!RadioButtonList.CONFIG_KEYS.legalKeys.includes(key)) {
       throw new Error(
         'Configuration does not exist!'
       )
     } else {
-      return this.config[key]
+      return this._config[key]
     }
   }
 
   /**
    * Sets a configuration. Re-renders as needed.
-   * @param {string} key The configuration name.
+   * @param {RadioButtonConfigKeys} key The configuration name.
    * @param {any} val The value to set.
    * @returns {RadioButtonList}
    */
   set (key, val) {
-    if (!this.keys.legalKeys.includes(key)) {
+    if (!RadioButtonList.CONFIG_KEYS.legalKeys.includes(key)) {
       throw new TypeError(
         'Invalid configuration key!'
       )
     }
-    this.config[key] = val
+    this._config[key] = val
+    this._needsUpdate = true
 
-    if (this.config.renderTarget instanceof HTMLElement) {
-      // If renderTarget is set, we must re-render.
-      this.render()
-    }
     return this
   }
 
   /**
-   * Sets an "option" (i.e. radio button). If it already exists, it is
-   * overridden.
-   * @param {string} id An unique ID for the option to add.
-   * @param {RadioButtonOptions} opts Options for creating the radio button.
+   * Modify or create a new radio button.
+   * @param {string} id The ID of the radio button to set.
+   * @param {RadioButtonOptions} opts Options.
    * @returns {RadioButtonList}
    */
-  setOption (id, opts) {
+  setRadioButton (id, opts) {
     let item = this.listContainer.querySelector(`#${id}-label`)
     let input = this.listContainer.querySelector(`#${id}`)
-
-    const spanElem = document.createElement('span')
-    spanElem.classList.add('radio-list-checkmark')
 
     if (item instanceof HTMLLabelElement && input instanceof HTMLInputElement) {
       input.value = opts.value
       input.checked = opts.checked
-      domHelpers.removeAllChildNodes(item)
+      removeAllChildNodes(item)
       item.appendChild(document.createTextNode(opts.labelContent))
       item.appendChild(input)
-      item.appendChild(spanElem)
+      item.appendChild(RadioButtonList.ELEMS.checkmarkSpan.cloneNode(true))
     } else {
       item = document.createElement('label')
       input = document.createElement('input')
@@ -191,61 +168,52 @@ export default class RadioButtonList extends EventEmitter {
       input.value = opts.value
       item.style.display = 'block'
       item.classList.add(
-        'radio-list-item-container',
-        'ui-no-bold',
+        'radio-list__item',
+        // 'ui-no-bold',
         'ui-content',
-        'ui-radius',
-        'ui-light'
+        'ui-content--radius',
+        'ui-content--light'
       )
       item.appendChild(document.createTextNode(opts.labelContent))
       item.appendChild(input)
-      item.appendChild(spanElem.cloneNode(true))
+      item.appendChild(RadioButtonList.ELEMS.checkmarkSpan.cloneNode(true))
       this._attachEventListeners(item)
-    }
 
-    domHelpers.render(item, this.listContainer)
-
-    if (this.config.renderTarget instanceof HTMLElement) {
-      // If renderTarget is set, we must re-render.
-      this.render()
+      this.listContainer.appendChild(item)
     }
 
     return this
   }
 
   /**
-   * Removes an "option" (i.e. radio button) from the list if it exists.
-   * @param {string} id The ID of the option to remove.
-   * @returns {RadioButtonList}
+   * Deletes the specified radio button. Returns true if the radio button was
+   * deleted sucessfully, false otherwise.
+   * @param {string} id The ID of the radio button.
    */
-  removeOption (id) {
+  deleteRadioButton (id) {
     const item = this.listContainer.querySelector(`#${id}-label`)
-    if (item instanceof HTMLLabelElement) {
-      domHelpers.removeChildNode(item, this.listContainer)
-    }
-    return this
-  }
-
-  /**
-   * Renders this radio button list.
-   * @returns {RadioButtonList}
-   */
-  render () {
-    if (!this.config.show) {
-      if (this.rendered) {
-        this.hide()
-      }
-      return this
-    } else if (this.rendered) {
-      this._setDynamicProps()
-      return this
+    if (!(item instanceof HTMLLabelElement)) {
+      // Doesn't exist.
+      return false
     }
 
-    this.listContainer.style.display = 'block'
-
-    this._setDynamicProps()
-    this._render()
-    this.rendered = true
-    return this
+    this.listContainer.removeChild(item)
+    return true
   }
+}
+
+RadioButtonList.CONFIG_KEYS = {
+  legalKeys: ['itemWidth', 'itemHeight', 'show']
+}
+RadioButtonList.ELEMS = {
+  listContainer: (() => {
+    const listContainer = document.createElement('div')
+    listContainer.setAttribute('role', 'radiogroup')
+    return listContainer
+  })(),
+  checkmarkSpan: (() => {
+    const checkmarkSpan = document.createElement('span')
+    checkmarkSpan.classList.add('radio-list__checkmark')
+    return checkmarkSpan
+  })()
 }
