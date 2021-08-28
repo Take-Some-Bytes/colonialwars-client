@@ -381,7 +381,6 @@ export default class Dialog extends EventEmitter {
     // Make the element draggable... or not.
     if (this._config.draggable) {
       if (!this._dragHandle) {
-        console.log('making draggable')
         this.header.style.cursor = 'move'
         this._dragHandle = makeDraggable(
           container, `${this.name}-dialog__header`,
