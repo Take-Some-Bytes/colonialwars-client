@@ -275,10 +275,8 @@ export default class Dialog extends EventEmitter {
    * @returns {any}
    */
   get (key) {
-    if (Dialog.CONFIG_KEYS.legalKeys.includes(key)) {
-      throw new Error(
-        'Configuration does not exist!'
-      )
+    if (!Dialog.CONFIG_KEYS.legalKeys.includes(key)) {
+      throw new Error('Configuration does not exist!')
     } else if (['width', 'height'].includes(key)) {
       return this._config.dimensions[key]
     } else if (['x', 'y'].includes(key)) {
@@ -296,9 +294,7 @@ export default class Dialog extends EventEmitter {
    */
   set (key, val) {
     if (!Dialog.CONFIG_KEYS.legalKeys.includes(key)) {
-      throw new TypeError(
-        'Invalid configuration key!'
-      )
+      throw new TypeError('Invalid configuration key!')
     }
 
     if (Dialog.CONFIG_KEYS.nestedKeys.includes(key)) {
