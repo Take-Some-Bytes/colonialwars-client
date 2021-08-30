@@ -3,39 +3,38 @@
  * @fileoverview Functions that fetch data from back-end servers.
  */
 
-import * as adapters from './adapters.js'
-
 /**
- * @typedef {'arrayBuffer'|'blob'|'formData'|'json'|'text'} BodyTypes
- * @typedef {Object} AvailableServers
- * @prop {Array<AvailableServer>} serversAvailable
+ * @typedef {Record<'serverName'|'location', string>} CWServer
+ * @typedef {'teams'|'koth'|'siege'} GameMode
  *
- * @typedef {Object} AvailableServer
- * @prop {string} serverName
- * @prop {string} location
- *
- * @typedef {Object} ServerStatus
- * @prop {boolean} serverRunning
- * @prop {boolean} full
- * @prop {number} maxClients
- * @prop {number} currentClients
- *
- * @typedef {Object} Status
- * @prop {string} serverName
- * @prop {ServerStatus} status
- *
- * @typedef {Object} GameMetaObj
- * @prop {string} id
- * @prop {string} mode
+ * @typedef {Object} CWServerStatus
  * @prop {string} name
+ * @prop {string} location
+ * @prop {boolean} available
+ *
+ * @typedef {Object} GameInfo
+ * @prop {string} id
+ * @prop {string} name
+ * @prop {GameMode} mode
  * @prop {Array<string>} teams
+ * @prop {string} description
  * @prop {Object} capacity
  * @prop {number} capacity.max
  * @prop {number} capacity.current
- *
- * @typedef {Object} FetcherConfig
- * @prop {string} version
  */
+
+/**
+ * Rejects if the response passed in was not sucessful.
+ * @param {Response} res The response.
+ * @returns {Response}
+ */
+function rejectIfNotSucessful (res) {
+  if (!res.ok) {
+    throw new Error(`Request failed with status code ${res.status}.`)
+  }
+
+  return res
+}
 
 /**
  * Fetcher class.
@@ -43,11 +42,9 @@ import * as adapters from './adapters.js'
 export default class Fetcher {
   /**
    * Constructor for a Fetcher class.
-   * @param {FetcherConfig} config Configurations.
+   * @param {string} version The current app version.
    */
-  constructor (config) {
-    const { version } = config
-
+  constructor (version) {
     this.version = version
   }
 
@@ -72,82 +69,79 @@ export default class Fetcher {
   }
 
   /**
-   * Fetches a resource as the specified type.
-   * @param {BodyTypes} type The type to fetch the resposne as. Must be ``arrayBuffer``,
-   * ``blob``, ``formData``, ``json``, or ``text``.
-   * @param {string} url The URL to fetch the resource as.
-   * @returns {Promise<any>}
+   * Fetches a resource from an URL as JSON. Rejects if response body is not
+   * valid JSON, the response status was non-sucessful, or if the ``fetch()``
+   * function rejects.
+   * @param {string} url The URL to fetch the resource from.
+   * @returns {Promise<Record<string, any>>}
    */
-  async fetchAs (type, url) {
+  async fetchAsJson (url) {
     const res = await this.fetchResource(url)
-    if (!res.ok) {
-      throw new Error(`Failed to fetch resource with status code ${res.status}!`)
-    }
-    return await res[type]()
+    const res1 = rejectIfNotSucessful(res)
+    return await res1.json()
   }
 
   /**
-   * Fetches data about the availabe game servers from the backend.
-   * @returns {Promise<AvailableServers>}
+   * Fetches all Colonial Wars Server locations, regardless of whether it is
+   * available or not.
+   * @returns {Promise<Array<CWServer>>}
    */
-  async fetchAvailableServers () {
+  async fetchCWServers () {
+    const url = new URL('/xhr?for=serversAvailable', window.location.origin)
+    const res = await this.fetchAsJson(url.href)
+    if (res.status !== 'ok') {
+      throw new Error(`Failed to fetch servers! Error is: ${res.error.message}`)
+    }
+
+    return res.data.serversAvailable
+  }
+
+  /**
+   * Fetches a list of all the games that are hosted on the server specified in
+   * ``serverUrl``.
+   * @param {string} serverUrl The URL of the server to fetch the list of games
+   * from.
+   * @returns {Promise<Array<GameInfo>>}
+   */
+  async fetchGamesListFrom (serverUrl) {
+    const url = new URL('/games-info', serverUrl)
+    const res = await this.fetchAsJson(url.href)
+    if (res.status !== 'ok') {
+      throw new Error(`Failed to fetch servers! Error is: ${res.error.message}`)
+    }
+
+    return res.data
+  }
+
+  /**
+   * Fetch the status of a Colonial Wars Server.
+   * @param {CWServer} server The server to fetch the status for.
+   * @returns {CWServerStatus}
+   */
+  async fetchServerStatus (server) {
     try {
-      return adapters.httpResponseAdapter(
-        await this.fetchAs('json', `${window.location.origin}/xhr?for=serversAvailable`)
-      )
-    } catch (ex) {
-      throw new Error(
-        `Failed to fetch available game servers! Error is: ${ex.stack}`
-      )
-    }
-  }
-
-  /**
-   * Fetches each of the specified server's status.
-   * @param {AvailableServers} servers The servers that we received data about.
-   * @returns {Promise<Object<string, Status>>}
-   */
-  async fetchServersStatus (servers) {
-    const statuses = {}
-    for (let i = 0; i < servers.serversAvailable.length; i++) {
-      const server = servers.serversAvailable[i]
-
-      if (!server) {
-        continue
+      const url = new URL('/status-report', server.location)
+      const res = await this.fetchAsJson(url.href)
+      if (res.status !== 'ok') {
+        throw new Error(
+          `Failed to fetch server ${server.name}! Error is: ${res.error.message}`
+        )
       }
+      const report = res.data
 
-      try {
-        statuses[server.serverName] = {
-          serverName: server.serverName,
-          status: adapters.httpResponseAdapter(
-            await this.fetchAs('json', `${server.location}/status-report`)
-          )
-        }
-      } catch (ex) {
-        console.error(`Error while fetching ${server.serverName}'s status!`)
-        console.error(ex.stack)
-        // If the request errors out, it's no huge deal.
-        continue
+      return {
+        name: server.serverName,
+        location: server.location,
+        available: report.serverRunning && !report.full
       }
-    }
-
-    return statuses
-  }
-
-  /**
-   * Fetches the list of available games available from the specified server.
-   * @param {string} serverOrigin The origin of the server to get the list of games from.
-   * @returns {Promise<Array<GameMetaObj>>}
-   */
-  async fetchGamesListFrom (serverOrigin) {
-    try {
-      return adapters.httpResponseAdapter(
-        await this.fetchAs('json', `${serverOrigin}/games-stats`)
-      )
     } catch (ex) {
-      throw new Error(
-        `Failed to fetch list of available games from ${serverOrigin}.`
-      )
+      // No big deal. Just assume that the server isn't available.
+      console.error(ex.stack)
+      return {
+        name: server.serverName,
+        location: null,
+        available: false
+      }
     }
   }
 }
