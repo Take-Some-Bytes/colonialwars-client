@@ -1,0 +1,68 @@
+/* Base CSS styles. */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  user-select: initial;
+}
+
+h1 {
+  font-size: 4rem;
+}
+html, body {
+  height: 100%;
+  font-size: 20px;
+  font-family: 'Raleway', sans-serif;
+  text-align: center;
+}
+main {
+  min-height: 100%;
+  position: relative;
+}
+input[type='text'] {
+  display: block;
+  font-size: 0.9rem;
+  width: 10rem;
+}
+
+#root {
+  background-color: rgb(172, 118, 61);
+  color: rgb(244, 244, 244);
+
+  height: 100%;
+  min-width: 25rem;
+
+  position: relative;
+}
+#app-main {
+  min-height: 100%;
+
+  position: relative;
+}
+
+.hidden {
+  display: none !important;
+}
+.space-between * {
+  margin: 0.6rem;
+}
+.column {
+  width: 20rem;
+  margin: auto;
+}
+.error {
+  color: rgb(248, 25, 25);
+  font-weight: bold;
+}
+.centered-block {
+  display: block;
+  width: 100vw;
+  height: 6rem;
+
+  position: absolute;
+  top: calc(50% - 3rem);
+  left: calc(50% - 50vw);
+
+  text-align: center;
+  color: rgb(244, 244, 244);
+}
