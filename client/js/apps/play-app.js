@@ -11,27 +11,50 @@ import WSConn from '../cwdtp/conn.js'
 import { ErrorDisplayer } from '../helpers/display-utils.js'
 
 const { COMMUNICATIONS: communications } = constants
-const debug = debugFactory('colonialwars:play-app')
+const debug = debugFactory('cw-client:play-app')
+
 /**
  * Returns the localStorage object if available. Otherwise,
  * returns undefined.
  * @returns {Storage|undefined}
  */
-const getStorage = () => {
+function getStorage () {
   if (window.localStorage) {
     return window.localStorage
   }
   return undefined
 }
+/**
+ * Get's the client's current key bindings.
+ * @returns {import('../game/game.js').GameKeyBindings}
+ */
+function getKeyBindings () {
+  /**
+   * @type {import('../game/game.js').GameKeyBindings}
+   */
+  let bindings = null
+  const storage = getStorage()
+  if (!storage) {
+    return constants.GAME_CONSTANTS.DEFAULT_KEY_BINDINGS
+  }
+
+  const item = storage.getItem('key-bindings')
+  if (!item) {
+    bindings = constants.GAME_CONSTANTS.DEFAULT_KEY_BINDINGS
+  } else {
+    bindings = JSON.parse(item)
+  }
+
+  return bindings
+}
 
 /**
+ * @typedef {import('./app').PlayOpts} PlayOpts
+ *
  * @typedef {Object} PlayAppOptions
- * @prop {string} auth
- * @prop {string} gameID
- * @prop {string} serverLoc
- * @prop {string} playername
- * @prop {string} playerteam
- * @prop {import('../helpers/display-utils').ViewportDimensions} viewportDimensions
+ * @prop {PlayOpts} playOpts
+ * @prop {() => Promise<void>)} onQuit
+ * @prop {import('../helpers/display-utils').ViewportDimensions} vwDimensions
  *
  * @typedef {Object} MapData
  * @prop {Readonly<import('../game/game').WorldLimits>} worldLimits
@@ -56,34 +79,41 @@ export default class PlayApp {
      */
     this.canvas = null
     this.connected = false
+    this.error = null
 
-    this.viewportDimensions = opts.viewportDimensions
-    this.url = new URL(opts.serverLoc)
-    this.query = new URLSearchParams({
-      auth: opts.auth,
-      game: opts.gameID,
-      playername: opts.playername,
-      playerteam: opts.playerteam
-    })
-
-    this.errDisplayer = new ErrorDisplayer({
-      classes: [],
-      elem: document.body
-    })
+    this.vwDimensions = opts.vwDimensions
+    this.playOpts = opts.playOpts
   }
 
   /**
-   * Creates the CWDTP connection.
+   * Shows the error store in ``this.error``.
+   * @private
+   */
+  _showError () {
+    // 1: show the error.
+    const errDisplayer = new ErrorDisplayer({
+      classes: [],
+      elem: document.getElementById('error-message')
+    })
+    errDisplayer.display(this.error, false)
+
+    // 2: show and hide elements.
+    document.getElementById('loading-screen').classList.add('hidden')
+    document.getElementById('app-main').classList.add('hidden')
+    document.getElementById('error-screen').classList.remove('hidden')
+  }
+
+  /**
+   * Creates a CWDTP connection to the server.
+   * @param {string} url The URl to connect to.
    * @returns {Promise<void>}
    * @private
    */
-  _connect () {
+  _connect (url) {
+    const self = this
+
     return new Promise((resolve, reject) => {
-      const secure = this.url.protocol === 'https:'
-      const self = this
-      this.conn = new WSConn(
-        `${secure ? 'wss' : 'ws'}://${this.url.host}/play?${this.query.toString()}`
-      )
+      this.conn = new WSConn(url)
       this.conn.on('connect', () => {
         resolve()
       })
@@ -105,13 +135,13 @@ export default class PlayApp {
       throw new TypeError('Invalid game canvas!')
     }
 
-    this.canvas.width = this.viewportDimensions.width
-    this.canvas.height = this.viewportDimensions.height
+    this.canvas.width = this.vwDimensions.width
+    this.canvas.height = this.vwDimensions.height
     this.canvas.style.display = 'block'
 
-    this.viewportDimensions.on('update', () => {
-      this.canvas.width = this.viewportDimensions.width
-      this.canvas.height = this.viewportDimensions.height
+    this.vwDimensions.on('update', () => {
+      this.canvas.width = this.vwDimensions.width
+      this.canvas.height = this.vwDimensions.height
     })
   }
 
@@ -141,65 +171,72 @@ export default class PlayApp {
   }
 
   /**
-   * Get's the client's current key bindings.
-   * @returns {import('../game/game.js').GameKeyBindings}
-   * @private
-   */
-  _getKeyBindings () {
-    /**
-     * @type {import('../game/game.js').GameKeyBindings}
-     */
-    let bindings = null
-    const storage = getStorage()
-    if (!storage) {
-      return constants.GAME_CONSTANTS.DEFAULT_KEY_BINDINGS
-    }
-
-    const item = storage.getItem('key-bindings')
-    if (!item) {
-      bindings = constants.GAME_CONSTANTS.DEFAULT_KEY_BINDINGS
-    } else {
-      bindings = JSON.parse(item)
-    }
-
-    return bindings
-  }
-
-  /**
-   * Initializes the Game class that is going to handle actual game logic.
-   * @private
-   */
-  async _initGame () {
-    const keyBindings = this._getKeyBindings()
-    const mapData = await this._emitReady()
-    this.game = await Game.create(
-      this.canvas.getContext('2d'), this.conn,
-      mapData, keyBindings, this.viewportDimensions
-    )
-
-    debug(this.game)
-  }
-
-  /**
    * Initializes the play app.
-   * @returns {Promise<PlayApp>}
+   * @returns {Promise<void>}
    */
-  async init () {
-    await this._connect().catch(err => {
-      console.error(err)
-      this.errDisplayer.display(new Error('Failed to connect to server!'))
-    })
-    this._initCanvas()
-    await this._initGame()
-    debug('Initialized')
+  async init () {}
 
-    return this
+  /**
+   * Starts this Play application.
+   */
+  start () {
+    // Step 1: construct connection URL and query.
+    let connectQuery = null
+    let connectUrl = null
+
+    try {
+      connectQuery = new URLSearchParams({
+        auth: this.playOpts.auth,
+        game: this.playOpts.gameID,
+        playername: this.playOpts.playerName,
+        playerteam: this.playOpts.playerTeam
+      })
+      connectUrl = new URL(
+        `/play?${connectQuery.toString()}`, this.playOpts.serverLoc
+      )
+      connectUrl.protocol = connectUrl.protocol === 'https:'
+        ? 'wss:'
+        : 'ws:'
+    } catch (ex) {
+      console.error(ex.stack)
+      this.error = new Error('Something went wrong. Please try again later.')
+      this._showError()
+      return
+    }
+
+    // Step 2: connect to the server.
+    this._connect(connectUrl.href)
+      .then(() => this._initCanvas())
+      .then(() => this._emitReady())
+      .then(mapData => {
+        return [mapData, getKeyBindings()]
+      })
+      .then(([mapData, bindings]) => {
+        return Game.create(
+          this.canvas.getContext('2d'), this.conn,
+          mapData, bindings, this.vwDimensions
+        )
+      })
+      .then(game => { this.game = game })
+      .then(() => this.game.run())
+      .then(() => {
+        // Hide loading screen.
+        const loadingElem = document.getElementById('loading-screen')
+        loadingElem.classList.add('hidden')
+
+        // Show the main and play app.
+        const appMain = document.getElementById('app-main')
+        const playMain = document.getElementById('play-main')
+        appMain.classList.add('app-main--play')
+        appMain.classList.remove('hidden')
+        playMain.classList.remove('hidden')
+      })
   }
 
   /**
-   * Runs this play app.
+   * Stops this Play application.
    */
-  run () {
-    this.game.run()
+  stop () {
+    this.game.stop()
   }
 }
