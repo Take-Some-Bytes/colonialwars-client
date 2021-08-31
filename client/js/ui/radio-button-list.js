@@ -44,6 +44,14 @@ export default class RadioButtonList extends EventEmitter {
   }
 
   /**
+   * Gets the selected value.
+   * @returns {string}
+   */
+  get selected () {
+    return this.listContainer.querySelector(`input[name=${this.name}]:checked`)?.value
+  }
+
+  /**
    * Attaches the required event listeners for the specified list item.
    * @param {HTMLLabelElement} label The item to attach event listeners to.
    * @private
