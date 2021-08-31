@@ -99,6 +99,27 @@ export function json () {
   }
 }
 /**
+ * Returns a function that checks if the given value is a valid,
+ * absolute HTTP/HTTPS URL.
+ * @returns {ValidatorFunc}
+ */
+export function httpURL () {
+  return val => {
+    try {
+      const url = new URL(val)
+      if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+        throw new Error('Not a HTTP/HTTPS URL!')
+      }
+    } catch (ex) {
+      return new ValidationError(
+        'Value is not a valid HTTP/HTTPS URL!', 'EINVALID',
+        'Make sure the value is a valid URL using either HTTP or HTTPS protocol.'
+      )
+    }
+    return true
+  }
+}
+/**
  * Checks if a value is in an array.
  * @param {Array<any>} arr The array to check if the value is in.
  * @returns {ValidatorFunc}

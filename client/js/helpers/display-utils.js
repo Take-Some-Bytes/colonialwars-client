@@ -3,9 +3,9 @@
  * @fileoverview Utilities for displaying stuff to the user.
  */
 
-import EventEmitter from '../event-emitter.js'
+import EventEmitter from './event-emitter.js'
 
-import * as validator from '../validation/validator.js'
+import { ValidationError } from './validator.js'
 
 /**
  * @typedef {import('../validation/validator').ValidationError} ValidationError
@@ -44,7 +44,7 @@ export class ErrorDisplayer {
       this.elem.classList.add(cls)
     })
 
-    if (isValidationErr && error instanceof validator.ValidationError) {
+    if (isValidationErr && error instanceof ValidationError) {
       this._errorMsg = document.createTextNode(
         `${error.message} To fix this issue, ${error.toFix.toLowerCase()}`
       )
@@ -63,11 +63,9 @@ export class ErrorDisplayer {
     this.classes.forEach(cls => {
       this.elem.classList.remove(cls)
     })
-    console.log(this._errorMsg)
     if (this._errorMsg instanceof Text && this.elem.contains(this._errorMsg)) {
       this.elem.removeChild(this._errorMsg)
       this._errorMsg = null
-      console.log(this._errorMsg)
     }
   }
 
@@ -113,5 +111,25 @@ export class ViewportDimensions extends EventEmitter {
     this.height = document.documentElement.clientHeight
 
     this.emit('update')
+  }
+}
+
+/**
+ * Return the X/Y coordinates that will center an element with the specified
+ * dimensions if placed using the top left corner.
+ * @param {Record<'width'|'height', number>} elemDimensions
+ * The element to calculate with.
+ * @param {import('./display-utils').ViewportDimensions} vwDimensions
+ * The current viewport dimensions.
+ * @returns {Record<'x'|'y', number>}
+ */
+export function centerPos (elemDimensions, vwDimensions) {
+  return {
+    x: Math.round(
+      vwDimensions.width / 2
+    ) - elemDimensions.width / 2,
+    y: Math.round(
+      vwDimensions.height / 2
+    ) - elemDimensions.height / 2
   }
 }

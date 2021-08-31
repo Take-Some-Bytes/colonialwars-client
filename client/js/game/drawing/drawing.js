@@ -9,7 +9,7 @@ import debugFactory from '../../debug.js'
 
 import { ImageLoader } from '../../helpers/image-helpers.js'
 
-const debug = debugFactory('colonialwars:game-drawing')
+const debug = debugFactory('cw-client:game-drawing')
 
 /**
  * @typedef {Object} DrawingOptions

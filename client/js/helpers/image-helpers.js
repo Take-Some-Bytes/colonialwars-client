@@ -5,7 +5,7 @@
 
 import debugFactory from '../debug.js'
 
-const debug = debugFactory('colonialwars:image-helpers')
+const debug = debugFactory('cw-client:image-helpers')
 
 /**
  * @typedef {Object} ImageLoaderOptions

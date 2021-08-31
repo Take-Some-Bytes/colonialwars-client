@@ -10,7 +10,7 @@ import ChunkSplitter from './chunk-splitter.js'
 
 import * as numberUtils from '../../helpers/number-utils.js'
 
-const debug = debugFactory('colonialwars:map-drawer')
+const debug = debugFactory('cw-client:map-drawer')
 
 /**
  * @typedef {Object} MapConfig

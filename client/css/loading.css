@@ -1,0 +1,47 @@
+/* CSS for a spinner to display while loading something. */
+.loading {
+  display: block;
+  width: 6rem;
+  height: 6rem;
+
+  position: absolute;
+  top: calc(50% - 3rem);
+  left: calc(50% - 3rem);
+
+  text-align: center;
+  color: rgb(244, 244, 244);
+}
+.loading__spinner {
+  animation-name: spin;
+  -webkit-animation-name: spin;
+  -moz-animation-name: spin;
+  -ms-animation-name: spin;
+
+  animation-duration: 1500ms;
+  -webkit-animation-duration: 1500ms;
+  -moz-animation-duration: 1500ms;
+  -ms-animation-duration: 1500ms;
+
+  animation-iteration-count: infinite;
+  -webkit-animation-iteration-count: infinite;
+  -ms-animation-iteration-count: infinite;
+  -moz-animation-iteration-count: infinite;
+
+  animation-timing-function: linear;
+  -webkit-animation-timing-function: linear;
+  -moz-animation-timing-function: linear;
+  -ms-animation-timing-function: linear;
+}
+
+@-moz-keyframes spin {
+  from { -moz-transform: rotate(0deg); }
+  to { -moz-transform: rotate(360deg); }
+}
+@-webkit-keyframes spin {
+  from { -webkit-transform: rotate(0deg); }
+  to { -webkit-transform: rotate(360deg); }
+}
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

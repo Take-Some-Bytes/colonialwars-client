@@ -3,13 +3,13 @@
  * @fileoverview WSConn class that implements a CWDTP client.
  */
 
-import EventEmitter from '../event-emitter.js'
+import EventEmitter from '../helpers/event-emitter.js'
 import debugFactory from '../debug.js'
 
 import * as bufferUtils from './buffer-utils.js'
 import * as crypto from './crypto.js'
 
-const debug = debugFactory('colonialwars:wsconn')
+const debug = debugFactory('cw-client:wsconn')
 
 const TYPED_ARRAY_TYPES = {
   int8array: Int8Array,

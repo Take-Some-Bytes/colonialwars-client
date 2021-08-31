@@ -1,5 +1,5 @@
 /* Radio button list classes. */
-.radio-list-item-container {
+.radio-list__item {
   cursor: pointer;
   font-size: 1em;
   -webkit-user-select: none;
@@ -14,18 +14,18 @@
   width: 250px;
   position: relative;
 }
-.radio-list-item-container input {
+.radio-list__item input {
   position: absolute;
   opacity: 0;
   cursor: pointer;
 }
-.radio-list-item-container input:checked ~ .radio-list-checkmark {
+.radio-list__item input:checked ~ .radio-list__checkmark {
   background-color: rgb(33, 150, 243);
 }
-.radio-list-item-container input:checked ~ .radio-list-checkmark::after {
+.radio-list__item input:checked ~ .radio-list__checkmark::after {
   display: block;
 }
-.radio-list-item-container .radio-list-checkmark::after {
+.radio-list__item .radio-list__checkmark::after {
   top: 9px;
   left: 9px;
   width: 8px;
@@ -34,7 +34,7 @@
   border-radius: 50%;
   background: white;
 }
-.radio-list-checkmark {
+.radio-list__checkmark {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
@@ -45,7 +45,7 @@
   background-color: rgb(252, 252, 252);
   border-radius: 50%;
 }
-.radio-list-checkmark::after {
+.radio-list__checkmark::after {
   content: "";
   position: absolute;
   display: none;

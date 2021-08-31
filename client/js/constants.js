@@ -31,6 +31,7 @@ function deepFreeze (object) {
 
 const constants = deepFreeze({
   VERSION: 'v0.5.1-PRE-ALPHA',
+  RELEASE_STAGE: 'pre-alpha',
   IMG_CONSTANTS: {
     GAME_IMAGE_DIR: '/imgs/game'
   },
@@ -51,7 +52,17 @@ const constants = deepFreeze({
     CONN_UPDATE: 'update',
     CONN_READY_ACK: 'ready-ack',
     CONN_CLIENT_ACTION: 'client-action'
-  }
+  },
+  APP_PAGES: {
+    UNSET: Symbol('UNSET'),
+    LOBBY: Symbol('LOBBY'),
+    PLAY: Symbol('PLAY')
+  },
+  PLAY_DIALOG_STATES: {
+    SERVER_PICKER: Symbol('SERVER_PICKER'),
+    GAME_PICKER: Symbol('GAME_PICKER')
+  },
+  ROOT_FONT_SIZE: parseInt(window.getComputedStyle(document.body).fontSize, 10)
 })
 
 export default constants

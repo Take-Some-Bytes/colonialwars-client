@@ -9,44 +9,123 @@
     where players could go head to head with other teams in real-time games.
   ">
   <link rel="icon" href="/imgs/favicon.ico">
-  <link rel="stylesheet" href="/css/fonts.css">
   <link rel="stylesheet" href="/css/ui.css">
+  <link rel="stylesheet" href="/css/fonts.css">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/lobby.css">
+  <link rel="stylesheet" href="/css/loading.css">
   <link rel="stylesheet" href="/css/dialog.css">
   <link rel="stylesheet" href="/css/selectmenu.css">
   <link rel="stylesheet" href="/css/radio-list.css">
-  <link rel="stylesheet" href="/css/common.css">
-  <link rel="stylesheet" href="/css/lobby.css">
   <link rel="stylesheet" href="/css/play.css">
   <script src="/js/main.js" type="module"></script>
 </head>
 <body>
-  <main id="content-container">
-    <header id="header-container">
-      <h1>Colonial Wars</h1>
-    </header>
-    <div class="space-between">
-      <nav class="column">
-        <button class="ui-button ui-radius ui-size-large centered-inline-block ui-dark" id="play-button">
-          Play
-        </button>
-        <a class="ui-button ui-radius ui-content ui-size-large centered-inline-block ui-dark" href="/tutorial"
-          id="tutorial-href">
-          Tutorial
-        </a>
-        <a class="ui-button ui-radius ui-content ui-size-large centered-inline-block ui-dark" href="/about"
-          id="about-href">
-          About
-        </a>
-        <button class="ui-button ui-radius ui-content ui-size-large centered-inline-block ui-dark" id="settings-button">
-          Settings
-        </button>
-      </nav>
+  <div id="root">
+    <!-- The main app. -->
+    <main id="app-main" class="hidden">
+      <section id="lobby-main" class="hidden">
+        <header id="lobby-header">
+          <h1>Colonial Wars</h1>
+        </header>
+        <div class="space-between">
+          <nav id="lobby-nav" class="column">
+            <button class="ui-button ui-button--large" id="play-button">
+              Play
+            </button>
+            <a class="ui-button ui-button--large" href="/tutorial" id="tutorial-href">
+              Tutorial
+            </a>
+            <a class="ui-button ui-button--large" href="/about" id="about-href">
+              About
+            </a>
+            <button class="ui-button ui-button--large" id="settings-button">
+              Settings
+            </button>
+          </nav>
+          <footer id="lobby-footer"></footer>
+        </div>
+      </section>
+      <section id="play-main" class="hidden">
+        <canvas id="game-canvas"></canvas>
+      </section>
+    </main>
+
+    <!-- Just a "Loading" icon. -->
+    <div class="loading" id='loading-screen'>
+      <svg width="100px" height="100px" class="loading__spinner" xmlns="http://www.w3.org/2000/svg">
+        <circle
+          cx="50px"
+          cy="50px"
+          fill="transparent"
+          stroke="black"
+          stroke-width="10px"
+          stroke-opacity="0.5"
+          r="30"
+        />
+        <path
+          d="M20 50 A30 30 0 0 1 50 20"
+          stroke="black"
+          stroke-width="10px"
+          fill="transparent"
+        />
+      </svg>
+      <p>Loading...</p>
     </div>
-    <footer id="footer-container"></footer>
-  </main>
-  <canvas id="game-canvas"></canvas>
-  <!-- <div id="image-container" class="has-border">
-    hi
-  </div> -->
+
+    <!-- Error screen -->
+    <div id="error-screen" class="centered-block hidden">
+      <p id="error-message"></p>
+    </div>
+
+    <!-- Play modal contents. -->
+    <!-- The server selection form. -->
+    <form id="play-dialog-form__select-server" class="hidden">
+      <label for="name-input" id='name-input-label' >
+        Player name:
+      </label>
+      <input type="text" id="name-input" placeholder="Player name">
+      <br>
+      <label for="server-selectmenu" id='server-selectmenu-label'>
+        Pick a server:
+      </label>
+      <select
+        id="server-selectmenu"
+        class='custom-select ui-content ui-content--radius ui-content--light'
+      >
+        <!-- To be filled in with JS. -->
+      </select>
+      <br>
+      <span id="select-server__error-span"></span>
+    </form>
+    <form id="play-dialog-form__select-game" class="hidden select-game-form">
+      <div id="games-list" class="select-game-form__games-list"></div>
+      <div id="game-info" class="select-game-form__game-info">
+        <header id="game-info__header" class="select-game-form__game-info__header">
+          <!-- To be filled in with JS. -->
+        </header>
+        <div id="main-game-info" class="select-game-form__game-info__main">
+          <div id="map-preview" class="select-game-form__game-info__main__map-preview">
+            <!-- To be filled in with JS. -->
+          </div>
+          <div id="game-info-sidebar" class="select-game-form__game-info__main__sidebar">
+            <!-- To be filled in with JS. -->
+          </div>
+        </div>
+        <div id="select-team-container" class="select-game-form__select-team">
+          <label for="team-selectmenu" id="team-selectmenu-label">
+            Select Team:
+          </label>
+          <select
+            id="team-selectmenu"
+            class='custom-select ui-content ui-content--radius ui-content--light'
+          >
+            <!-- To be filled in with JS. -->
+          </select>
+        </div>
+      </div>
+      <span id="select-game__error-span"></span>
+    </form>
+  </div>
 </body>
 </html>
