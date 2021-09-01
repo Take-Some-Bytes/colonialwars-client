@@ -3,6 +3,23 @@ Changelog for ``colonialwars-client``.
 
 The format is based on [Keep a Changelog][1], and this project adheres to [Semantic Versioning][2].
 
+## [v0.5.2] - 2021-08-31
+Major redesign of Colonial Wars Client. Communcation with Colonial Wars Server has not been touched,
+so only a patch increment is required.
+### Added:
+- Added a loading screen! The loading screen will be shown on initial load of the page, and when a
+``Game`` object is loading.
+### Changed:
+- Debug logs are now namespaced under ``"cw-client"``, as opposed to ``"colonialwars"``.
+- Modified most CSS classes to use [BEM](http://getbem.com/) methodology.
+- Restructured and redesiged main application.
+  * A main app object (the ``App`` class) will hand off control to other appropriate sub-apps, and
+  will switch sub-apps when necessary.
+  * The HTML structure of the main page was altered greatly, to give more hierarchy to the elements.
+  * The appearance of the lobby page has been altered greatly. The title and navigation buttons now
+  all appear on the center of the page, as opposed to on the left hand side for bigger screens, and
+  on the center for smaller screens.
+
 ## [v0.5.1] - 2021-08-18
 ### Fixed:
 - Fixed the ``ImageLoader`` class's ``.loadImg`` method: instead of firing of 10 requests for the
@@ -109,4 +126,5 @@ custom ``EventEmitter`` implementation in place of it.
 [v0.4.0]: https://github.com/Take-Some-Bytes/colonialwars-client/tree/7ec1261ca2c90866ae0b7c742a4a2575e70c565c
 [v0.4.1]: https://github.com/Take-Some-Bytes/colonialwars-client/tree/85cb2323d21888d9ec5f0d5095eae4f68500dd87
 [v0.5.0]: https://github.com/Take-Some-Bytes/colonialwars-client/tree/f1388103cc2f087e6222554751e3cfda515d1970
-[v0.5.1]: https://github.com/Take-Some-Bytes/colonialwars-server/tree/main
+[v0.5.1]: https://github.com/Take-Some-Bytes/colonialwars-client/tree/a418e6c38406cca198c2a258ef8b55e9c3d9d823
+[v0.5.2]: https://github.com/Take-Some-Bytes/colonialwars-client/tree/main
