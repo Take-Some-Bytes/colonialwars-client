@@ -3,7 +3,8 @@
   "description": "Colonial Wars client-side application.",
   "version": "0.5.2",
   "scripts": {
-    "start": "node server.js"
+    "start": "snowpack dev",
+    "build": "snowpack build"
   },
   "homepage": "https://github.com/Take-Some-Bytes/colonialwars-client#colonial-wars-client",
   "bugs": {
@@ -13,10 +14,12 @@
     "type": "git",
     "url": "https://github.com/Take-Some-Bytes/colonialwars-client.git"
   },
+  "dependencies": {
+    "debug": "^4.3.3"
+  },
   "devDependencies": {
-    "connect": "^3.7.0",
-    "finalhandler": "^1.1.2",
-    "serve-static": "^1.14.1",
+    "@snowpack/plugin-dotenv": "^2.2.0",
+    "snowpack": "^3.8.8",
     "standard": "*"
   },
   "author": {

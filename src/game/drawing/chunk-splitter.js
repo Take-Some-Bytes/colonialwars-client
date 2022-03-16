@@ -3,7 +3,7 @@
  * @fileoverview ChunkSplitter class to split a larger map into small chunks.
  */
 
-import debugFactory from '../../debug.js'
+import debugFactory from 'debug'
 import Vector2D from '../physics/vector2d.js'
 
 import * as numberUtils from '../../helpers/number-utils.js'

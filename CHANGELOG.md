@@ -3,6 +3,14 @@ Changelog for ``colonialwars-client``.
 
 The format is based on [Keep a Changelog][1], and this project adheres to [Semantic Versioning][2].
 
+## [Unreleased]
+### Changed:
+- Used snowpack for development!
+  * The folder structure has been re-jumbled to work with snowpack.
+  * The ``debug`` module has been moved to ``node_modules``, and is now being packaged by snowpack.
+  * The dynamic route (``/xhr``) has been moved to work with snowpack's
+  [``routes``]() configuration.
+
 ## [v0.5.2] - 2021-08-31
 Major redesign of Colonial Wars Client. Communcation with Colonial Wars Server has not been touched,
 so only a patch increment is required.
@@ -127,4 +135,5 @@ custom ``EventEmitter`` implementation in place of it.
 [v0.4.1]: https://github.com/Take-Some-Bytes/colonialwars-client/tree/85cb2323d21888d9ec5f0d5095eae4f68500dd87
 [v0.5.0]: https://github.com/Take-Some-Bytes/colonialwars-client/tree/f1388103cc2f087e6222554751e3cfda515d1970
 [v0.5.1]: https://github.com/Take-Some-Bytes/colonialwars-client/tree/a418e6c38406cca198c2a258ef8b55e9c3d9d823
-[v0.5.2]: https://github.com/Take-Some-Bytes/colonialwars-client/tree/main
+[v0.5.2]: https://github.com/Take-Some-Bytes/colonialwars-client/tree/40f49c3573bf76ee2567af52b0d1e3625227622d
+[Unreleased]: https://github.com/Take-Some-Bytes/colonialwars-client/tree/main

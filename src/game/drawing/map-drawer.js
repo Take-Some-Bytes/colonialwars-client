@@ -3,7 +3,7 @@
  * @fileoverview MapDrawer class to handle the drawing of Colonial Wars maps.
  */
 
-import debugFactory from '../../debug.js'
+import debugFactory from 'debug'
 import constants from '../../constants.js'
 import Vector2D from '../physics/vector2d.js'
 import ChunkSplitter from './chunk-splitter.js'

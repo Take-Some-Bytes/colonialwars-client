@@ -3,7 +3,7 @@
  * @fileoverview Player class to handle client-side player logic.
  */
 
-import debugFactory from '../debug.js'
+import debugFactory from 'debug'
 import Vector2D from './physics/vector2d.js'
 import BoundEntity from './physics/bound-entity.js'
 

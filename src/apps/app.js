@@ -4,7 +4,7 @@
  */
 
 import constants from '../constants.js'
-import debugFactory from '../debug.js'
+import debugFactory from 'debug'
 
 import { ViewportDimensions } from '../helpers/display-utils.js'
 

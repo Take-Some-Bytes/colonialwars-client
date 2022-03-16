@@ -3,7 +3,7 @@
  * @fileoverview Colonial Wars game client.
  */
 
-import debugFactory from '../debug.js'
+import debugFactory from 'debug'
 import constants from '../constants.js'
 import Drawing from './drawing/drawing.js'
 import Viewport from './viewport.js'
