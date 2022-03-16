@@ -3,7 +3,7 @@
  * @fileoverview Main lobby app class.
  */
 
-import debugFactory from '../debug.js'
+import debugFactory from 'debug'
 
 import Fetcher from '../helpers/fetcher.js'
 import PlayDialog from '../dialogs/play-dialog.js'

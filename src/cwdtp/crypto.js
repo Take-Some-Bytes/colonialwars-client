@@ -3,7 +3,7 @@
  * @fileoverview Some functions for cryptographic use.
  */
 
-import debugFactory from '../debug.js'
+import debugFactory from 'debug'
 
 const debug = debugFactory('cw-client:crypto')
 

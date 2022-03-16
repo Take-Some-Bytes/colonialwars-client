@@ -4,7 +4,7 @@
  */
 
 import EventEmitter from '../helpers/event-emitter.js'
-import debugFactory from '../debug.js'
+import debugFactory from 'debug'
 
 import * as bufferUtils from './buffer-utils.js'
 import * as crypto from './crypto.js'

@@ -3,7 +3,7 @@
  * @fileoverview PlayApp class to handle application logic while playing the game.
  */
 
-import debugFactory from '../debug.js'
+import debugFactory from 'debug'
 import constants from '../constants.js'
 import Game from '../game/game.js'
 import WSConn from '../cwdtp/conn.js'

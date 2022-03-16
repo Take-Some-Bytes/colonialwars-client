@@ -5,7 +5,7 @@
 
 import constants from '../../constants.js'
 import MapDrawer from './map-drawer.js'
-import debugFactory from '../../debug.js'
+import debugFactory from 'debug'
 
 import { ImageLoader } from '../../helpers/image-helpers.js'
 

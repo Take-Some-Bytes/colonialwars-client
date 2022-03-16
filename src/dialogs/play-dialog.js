@@ -4,7 +4,7 @@
  * and state.
  */
 
-import debugFactory from '../debug.js'
+import debugFactory from 'debug'
 
 import constants from '../constants.js'
 import Dialog from '../ui/dialog.js'
