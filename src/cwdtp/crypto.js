@@ -92,7 +92,7 @@ export function hash (data, alg) {
   //   } else if (typeof window !== 'undefined' && window.crypto) {
   //     // Browser mode.
   debug('Creating hash with algorithm %s', alg)
-  return window.crypto.subtle.digest(alg, data)
+  return window.crypto.subtle.digest(alg, new Uint8Array(data))
   //   } else {
   //     throw new Error('Found no functions to generate hashes!')
   //   }
