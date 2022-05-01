@@ -15,7 +15,8 @@
     "url": "https://github.com/Take-Some-Bytes/colonialwars-client.git"
   },
   "dependencies": {
-    "debug": "^4.3.3"
+    "debug": "^4.3.3",
+    "joi": "^17.6.0"
   },
   "devDependencies": {
     "@snowpack/plugin-dotenv": "^2.2.0",
