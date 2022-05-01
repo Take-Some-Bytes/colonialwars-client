@@ -5,11 +5,7 @@
 
 import EventEmitter from './event-emitter.js'
 
-import { ValidationError } from './validator.js'
-
 /**
- * @typedef {import('../validation/validator').ValidationError} ValidationError
- *
  * @typedef {Object} ErrorDisplayerOptions
  * @prop {Element} elem
  * @prop {Array<string>} [classes]
@@ -37,22 +33,13 @@ export class ErrorDisplayer {
   /**
    * Displays the specified error.
    * @param {Error} error The error to display.
-   * @param {boolean} isValidationErr Whether the error is a validation error.
    */
-  display (error, isValidationErr) {
+  display (error) {
     this.classes.forEach(cls => {
       this.elem.classList.add(cls)
     })
 
-    if (isValidationErr && error instanceof ValidationError) {
-      this._errorMsg = document.createTextNode(
-        `${error.message} To fix this issue, ${error.toFix.toLowerCase()}`
-      )
-    } else {
-      this._errorMsg = document.createTextNode(
-        error.message
-      )
-    }
+    this._errorMsg = document.createTextNode(error.message)
     this.elem.appendChild(this._errorMsg)
   }
 
