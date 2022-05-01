@@ -97,14 +97,14 @@ export default class Drawing {
     })
     const mapDrawer = new MapDrawer({
       gameCanvasContext: ctx,
-      imgLoader: imgLoader,
-      mapConfig: mapConfig,
-      viewport: viewport
+      imgLoader,
+      mapConfig,
+      viewport
     })
     const drawing = new Drawing({
       context: ctx,
       // imgLoader: imgLoader,
-      mapDrawer: mapDrawer,
+      mapDrawer,
       viewportDimensions: vwDimensions
     })
     await drawing.init()

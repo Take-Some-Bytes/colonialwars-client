@@ -133,7 +133,7 @@ export default class InputManager extends EventEmitter {
   static create (directionBindings, keyElem, mouseElem) {
     return new InputManager({
       inputTracker: InputTracker.create(keyElem, mouseElem),
-      directionBindings: directionBindings
+      directionBindings
     })
   }
 }
