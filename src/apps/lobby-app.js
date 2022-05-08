@@ -20,7 +20,7 @@ const debug = debugFactory('cw-client:lobby-app')
  *
  * @typedef {Object} LobbyAppOptions
  * @prop {import('../helpers/display-utils').ViewportDimensions} vwDimensions
- * @prop {(opts: PlayOpts) => Promise<void>} onPlay
+ * @prop {(page: symbol, opts: any) => void} setPage
  */
 
 /**
@@ -43,10 +43,11 @@ export default class LobbyApp {
 
     this.footerContent = new DocumentFragment()
 
-    this.fetcher = new Fetcher(constants.VERSION)
     this.playDialog = new PlayDialog({
       vwDimensions: opts.vwDimensions,
-      play: opts.onPlay,
+      play: playOpts => {
+        opts.setPage(constants.APP_PAGES.PLAY, playOpts)
+      },
       getServers: () => {
         return this.servers
       },
@@ -94,7 +95,7 @@ export default class LobbyApp {
   /**
    * Initializes the lobby app.
    */
-  async init () {
+  async initWithOpts (_) {
     // Step 1: display the version in the footer.
     const footer = this.footerContent
     const version = document.createElement('a')

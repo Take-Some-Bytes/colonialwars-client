@@ -52,9 +52,8 @@ function getKeyBindings () {
  * @typedef {import('./app').PlayOpts} PlayOpts
  *
  * @typedef {Object} PlayAppOptions
- * @prop {PlayOpts} playOpts
- * @prop {() => Promise<void>)} onQuit
  * @prop {import('../helpers/display-utils').ViewportDimensions} vwDimensions
+ * @prop {(page: symbol, opts: any) => void} setPage
  *
  * @typedef {Object} MapData
  * @prop {Readonly<import('../game/game').WorldLimits>} worldLimits
@@ -82,7 +81,6 @@ export default class PlayApp {
     this.error = null
 
     this.vwDimensions = opts.vwDimensions
-    this.playOpts = opts.playOpts
   }
 
   /**
@@ -172,9 +170,12 @@ export default class PlayApp {
 
   /**
    * Initializes the play app.
+   * @param {PlayOpts} opts Play options.
    * @returns {Promise<void>}
    */
-  async init () {}
+  async initWithOpts (opts) {
+    this.playOpts = opts
+  }
 
   /**
    * Starts this Play application.
