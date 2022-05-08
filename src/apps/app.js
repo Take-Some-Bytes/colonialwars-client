@@ -29,7 +29,7 @@ const debug = debugFactory('cw-client:main-app')
  * @prop {(page: symbol) => void} setPage
  *
  * @typedef {Object} SubApp
- * @prop {(opts: any) => void} initWithOpts
+ * @prop {(opts: any) => Promise<void>} initWithOpts
  * @prop {() => void} start
  * @prop {() => void} stop
  *
@@ -171,10 +171,11 @@ export default class App extends EventEmitter {
 
       this._getSubApp()
         .then(subApp => {
-          subApp.initWithOpts(opts)
-          subApp.start()
-
           this.currentSubApp = subApp
+        })
+        .then(() => this.currentSubApp.initWithOpts(opts))
+        .then(() => {
+          this.currentSubApp.start()
         })
     })
 
