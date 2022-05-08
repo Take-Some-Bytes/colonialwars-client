@@ -131,7 +131,7 @@ export default class App extends EventEmitter {
       throw new Error('Invalid sub-app!')
     }
 
-    const subApp = AppConstructor({
+    const subApp = new AppConstructor({
       vwDimensions: this.vwDimensions,
       setPage: this.setPage.bind(this)
     })
