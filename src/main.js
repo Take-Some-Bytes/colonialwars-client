@@ -5,8 +5,6 @@
 
 import App from './apps/app.js'
 
-(async () => {
-  const app = new App()
-  await app.init()
-  app.run()
-})()
+const app = new App()
+app.init()
+app.run()

@@ -10,10 +10,13 @@ import constants from '../constants.js'
 import Dialog from '../ui/dialog.js'
 import Selectmenu from '../ui/selectmenu.js'
 
-import * as validator from '../helpers/validator.js'
 import { centerPos, ErrorDisplayer } from '../helpers/display-utils.js'
 import RadioButtonList from '../ui/radio-button-list.js'
 import { removeAllChildNodes } from '../helpers/dom-helpers.js'
+
+import * as loaders from '../helpers/loaders.js'
+import * as validator from '../helpers/validator.js'
+import * as PlayService from '../services/play-service.js'
 
 const debug = debugFactory('cw-client:play-dialog')
 const PlayDialogStates = constants.PLAY_DIALOG_STATES
@@ -41,8 +44,8 @@ const selectGameForm = (() => {
 })()
 
 /**
- * @typedef {import('../helpers/fetcher').CWServerStatus} CWServerStatus
- * @typedef {import('../helpers/fetcher').GameInfo} GameInfo
+ * @typedef {import('../helpers/loaders').CWServerStatus} CWServerStatus
+ * @typedef {import('../helpers/loaders').GameInfo} GameInfo
  * @typedef {import('../apps/lobby-app').PlayOpts} PlayOpts
  *
  * @typedef {Object} RadioButtonListChangeData
@@ -53,8 +56,7 @@ const selectGameForm = (() => {
  * @typedef {Object} PlayDialogProps
  * @prop {(err: Error) => void} fatalError
  * @prop {() => Array<CWServerStatus>} getServers
- * @prop {(opts: PlayOpts) => Promise<void>} play
- * @prop {import('../helpers/fetcher').default} fetcher
+ * @prop {(opts: PlayOpts) => void} play
  * @prop {import('../helpers/image-helpers').ImageLoader} imgLoader
  * @prop {import('../helpers/display-utils').ViewportDimensions} vwDimensions
  */
@@ -72,63 +74,6 @@ const SELECTMENU_DIMENSIONS = Object.freeze({
   height: constants.ROOT_FONT_SIZE * 2.25
 })
 const RADIOLIST_DIMENSIONS = SELECTMENU_DIMENSIONS
-const ServerPickerSchema = Object.freeze({
-  name: validator.all(validator.string(), val => {
-    if (!/^[\w[\]{}()$\-*.,~\s]*$/i.test(val)) {
-      return new validator.ValidationError(
-        'Invalid characters in player name!', 'EINVALID',
-        'Please only enter alpanumeric characters, spaces' +
-        ', and the following: []{}()$-*.,~'
-      )
-    } else if (!/^.{2,22}$/.test(val)) {
-      return new validator.ValidationError(
-        'Name is too long or too short!', 'ELENGTH',
-        'Please enter a name between 2 and 22 characters.'
-      )
-    }
-    return true
-  }),
-  server: validator.all(validator.string(), validator.httpURL())
-})
-const GamePickerSchema = Object.freeze({
-  game: validator.all(validator.string(), validator.json()),
-  team: validator.string()
-})
-
-/**
- * Gets game authorization for this client.
- * @param {import('../helpers/fetcher').default} fetcher The Fetcher to use.
- * @param {string} serverLoc The location of the server.
- * @param {PlayOpts} opts Options.
- * @returns {Promise<string>}
- */
-async function getGameAuth (fetcher, serverLoc, opts) {
-  const query = new URLSearchParams({
-    playername: opts.playerName,
-    playerteam: opts.playerTeam,
-    playergame: opts.gameID
-  }).toString()
-  const url = new URL(`/game-auth/get?${query}`, serverLoc)
-  let res = null
-
-  try {
-    res = await fetcher.fetchResource(url)
-  } catch (ex) {
-    // fetch() errored out.
-    console.error(ex.stack)
-    throw new Error('Something went wrong. Please try again later.')
-  }
-
-  if (res.status === 409) {
-    // Player exists already.
-    throw new Error('Player already exists.')
-  } else if (!res.ok) {
-    // I don't know what went wrong.
-    throw new Error('Something went wrong. Please try again later.')
-  }
-
-  return (await res.json()).data.auth
-}
 
 /**
  * PlayDialog class/component.
@@ -142,13 +87,12 @@ export default class PlayDialog {
    */
   constructor (opts) {
     const {
-      vwDimensions, fatalError, getServers, imgLoader, fetcher, play
+      vwDimensions, fatalError, getServers, imgLoader, play
     } = opts
     this.vwDimensions = vwDimensions
     this.fatalError = fatalError
     this.getServers = getServers
     this.imgLoader = imgLoader
-    this.fetcher = fetcher
     this.play = play
 
     this.dialog = new Dialog('play')
@@ -185,7 +129,7 @@ export default class PlayDialog {
   /**
    * @private
    */
-  async _onNext () {
+  _onNext () {
     debug('Next clicked')
 
     // Make sure error displayer displays errors in the correct element, and
@@ -194,11 +138,13 @@ export default class PlayDialog {
       '#select-server__error-span'
     ))
     this.errorDisplayer.undisplay()
+
+    // Validate input.
     const data = {
       name: document.querySelector('#name-input').value,
-      server: this.serverSelect.selected
+      server: this.serverSelect?.selected
     }
-    const result = validator.validateObj(ServerPickerSchema, data)
+    const result = PlayService.validateServerPickerData(data)
     if (result instanceof validator.ValidationError) {
       debug('Input failed validation. Error is: %O', result)
       this.errorDisplayer.display(result, true)
@@ -210,28 +156,30 @@ export default class PlayDialog {
     this.dialog.setContent(loadingTxt.cloneNode(true), false)
     this.dialog.update(this.vwDimensions)
 
-    // Try fetching the games list first, and THEN modify the play dialog state.
-    try {
-      this.games.push(...await this.fetcher.fetchGamesListFrom(data.server))
-    } catch (ex) {
-      console.error(ex.stack)
-      this.fatalError(new Error([
-        'Failed to fetch games list from chosen server.',
-        'This should not be happening. Please report this to developers.'
-      ].join('')))
-      return
-    }
+    ;(async () => {
+      // Try fetching the games list first, and THEN modify the play dialog state.
+      try {
+        this.games.push(...await loaders.loadGamesListFrom(data.server))
+      } catch (ex) {
+        console.error(ex.stack)
+        this.fatalError(new Error([
+          'Failed to fetch games list from chosen server.',
+          'This should not be happening. Please report this to developers.'
+        ].join('')))
+        return
+      }
 
-    this.state = PlayDialogStates.GAME_PICKER
-    this.playOpts.playerName = data.name
-    this.playOpts.serverLoc = data.server
-    this.show()
+      this.state = PlayDialogStates.GAME_PICKER
+      this.playOpts.playerName = data.name
+      this.playOpts.serverLoc = data.server
+      this.show()
+    })()
   }
 
   /**
    * @private
    */
-  async _onPlay () {
+  _onPlay () {
     debug('Play clicked')
 
     this.errorDisplayer.setElem(document.getElementById('select-game__error-span'))
@@ -244,11 +192,7 @@ export default class PlayDialog {
       game: this.gamesList?.selected,
       team: this.teamSelect?.selected
     }
-    const schema = Object.assign({
-      // Make sure the selected team is an expected one.
-      team: validator.all(GamePickerSchema.team, validator.isOneOf(this.teams))
-    }, GamePickerSchema)
-    const result = validator.validateObj(schema, data)
+    const result = PlayService.validateGamePickerData(data, this.teams)
     if (result instanceof validator.ValidationError) {
       if (!data.game) {
         this.errorDisplayer.display(new Error('No game selected'), false)
@@ -264,16 +208,16 @@ export default class PlayDialog {
     this.playOpts.gameID = gameInfo.id
     this.playOpts.playerTeam = data.team
 
-    try {
-      this.playOpts.auth = await getGameAuth(
-        this.fetcher, this.playOpts.serverLoc, this.playOpts
-      )
-    } catch (ex) {
-      this.errorDisplayer.display(ex)
-      return
-    }
+    ;(async () => {
+      try {
+        this.playOpts.auth = await PlayService.getGameAuth(this.playOpts.serverLoc, this.playOpts)
+      } catch (ex) {
+        this.errorDisplayer.display(ex)
+        return
+      }
 
-    await this.play(this.playOpts)
+      this.play(this.playOpts)
+    })()
   }
 
   /**
@@ -513,7 +457,7 @@ export default class PlayDialog {
   /**
    * Initialize this PlayDialog.
    */
-  async init () {
+  init () {
     const dialogPosition = centerPos(PLAY_DIALOG_DIMENSIONS, this.vwDimensions)
 
     this.dialog
