@@ -5,23 +5,18 @@
 
 import debugFactory from 'debug'
 
-import Fetcher from '../helpers/fetcher.js'
 import PlayDialog from '../dialogs/play-dialog.js'
 // import SettingsDialog from '../components/settings-dialog.js'
 
 import constants from '../constants.js'
 import { ErrorDisplayer } from '../helpers/display-utils.js'
 import { ImageLoader } from '../helpers/image-helpers.js'
+import * as loaders from '../helpers/loaders.js'
 
 const debug = debugFactory('cw-client:lobby-app')
 
 /**
  * @typedef {import('./app').PlayOpts} PlayOpts
- *
- * @typedef {Object} LayoutComponent
- * @prop {() => Promise<void>} init
- * @prop {() => void} show
- * @prop {() => void} hide
  *
  * @typedef {Object} LobbyAppOptions
  * @prop {import('../helpers/display-utils').ViewportDimensions} vwDimensions
@@ -39,7 +34,7 @@ export default class LobbyApp {
   constructor (opts) {
     this.initialized = false
     this.running = false
-    /** @type {Array<import('../helpers/fetcher').CWServerStatus>} */
+    /** @type {Array<import('../helpers/loaders').CWServerStatus>} */
     this.servers = null
     /**
      * Any error that was encountered.
@@ -59,7 +54,6 @@ export default class LobbyApp {
         this.error = err
         this._showError(err)
       },
-      fetcher: this.fetcher,
       imgLoader: new ImageLoader({
         baseURL: new URL('/imgs/game/previews/', window.location.origin).href
       })
@@ -114,27 +108,27 @@ export default class LobbyApp {
     this._onPlayButtonClick = this._onPlayButtonClick.bind(this)
 
     // Step 3: initialize dialogs.
-    await this.playDialog.init()
+    this.playDialog.init()
 
     // Step 4: get servers.
     let servers = null
     try {
-      servers = await this.fetcher.fetchCWServers()
+      servers = await loaders.loadCWServers()
     } catch (ex) {
-      // Failed to fetch server list.
+      // Failed to load server list.
       console.error(ex.stack)
-      this.error = new Error('Failed to fetch server list.')
+      this.error = new Error('Failed to load server list.')
       this._showError()
     }
     if (Array.isArray(servers)) {
-      // fetcher.fetchServerStatus never rejects.
+      // loadServerStatus never rejects.
       this.servers = await Promise.all(servers.map(server =>
-        this.fetcher.fetchServerStatus(server)
+        loaders.loadServerStatus(server)
       ))
       if (this.servers.filter(serverInfo => serverInfo.available).length === 0) {
         // Not enough servers!
         console.error('Not enough available servers.')
-        this.error = new Error('Not enough servers.')
+        this.error = new Error('No available servers.')
         this._showError()
       }
     }
