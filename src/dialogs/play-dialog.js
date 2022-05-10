@@ -15,7 +15,6 @@ import RadioButtonList from '../ui/radio-button-list.js'
 import { removeAllChildNodes } from '../helpers/dom-helpers.js'
 
 import * as loaders from '../helpers/loaders.js'
-import * as validator from '../helpers/validator.js'
 import * as PlayService from '../services/play-service.js'
 
 const debug = debugFactory('cw-client:play-dialog')
@@ -145,9 +144,9 @@ export default class PlayDialog {
       server: this.serverSelect?.selected
     }
     const result = PlayService.validateServerPickerData(data)
-    if (result instanceof validator.ValidationError) {
-      debug('Input failed validation. Error is: %O', result)
-      this.errorDisplayer.display(result, true)
+    if (result.error) {
+      debug('Input failed validation. Error is: %O', result.error)
+      this.errorDisplayer.display(result.error)
       return
     }
     debug('Input passed validation.')
@@ -193,12 +192,13 @@ export default class PlayDialog {
       team: this.teamSelect?.selected
     }
     const result = PlayService.validateGamePickerData(data, this.teams)
-    if (result instanceof validator.ValidationError) {
+    if (result.error) {
+      debug('Input failed validation. Error is: %O', result.error)
       if (!data.game) {
-        this.errorDisplayer.display(new Error('No game selected'), false)
+        this.errorDisplayer.display(new Error('No game selected'))
         return
       }
-      this.errorDisplayer.display(result, true)
+      this.errorDisplayer.display(result.error)
       return
     }
     debug('Input passed validation')
