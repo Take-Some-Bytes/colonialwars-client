@@ -46,7 +46,7 @@ const ServerPickerSchema = JoiWithCoercion.object({
     .messages({
       'string.empty': 'Player name is required.',
       'string.min': 'Player name is too short.',
-      'string.max': 'Player name is too short.',
+      'string.max': 'Player name is too long.',
       'string.pattern.name': 'Player name contains invalid characters.'
     }),
   server: JoiWithCoercion.string().uri({
