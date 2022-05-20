@@ -3,6 +3,14 @@ Changelog for ``colonialwars-client``.
 
 The format is based on [Keep a Changelog][1], and this project adheres to [Semantic Versioning][2].
 
+<!--
+  When releasing a new version:
+    - Ensure all updateable dependencies are updated.
+    - Add changelog entries for important things that changed.
+    - Bump version in package.json.
+    - Update compatibility table in README.md if needed.
+-->
+
 ## [Unreleased]
 
 ## [v0.5.3] - 2022-04-17
