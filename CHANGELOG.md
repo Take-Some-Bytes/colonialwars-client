@@ -11,7 +11,16 @@ The format is based on [Keep a Changelog][1], and this project adheres to [Seman
     - Update compatibility table in README.md if needed.
 -->
 
-## [Unreleased]
+## [v0.5.4] - 2022-05-20
+
+### Changed:
+- Updated [``standard``](https://npmjs.com/package/standard) to 17.x release line.
+- Used [``Joi``](https://joi.dev) for validation.
+- Restructured and redesigned main application again:
+  * The main app object now plays a minimal role in passing the correct options for each sub-app.
+  When sub-apps request a page switch, the sub-app that is initiating the switch is responsible for
+  passing in the appropriate options for the next sub-app.
+  * Replaced Fetchers class with a bunch of normal functions.
 
 ## [v0.5.3] - 2022-04-17
 ### Changed:
@@ -147,4 +156,4 @@ custom ``EventEmitter`` implementation in place of it.
 [v0.5.1]: https://github.com/Take-Some-Bytes/colonialwars-client/tree/a418e6c38406cca198c2a258ef8b55e9c3d9d823
 [v0.5.2]: https://github.com/Take-Some-Bytes/colonialwars-client/tree/40f49c3573bf76ee2567af52b0d1e3625227622d
 [v0.5.3]: https://github.com/Take-Some-Bytes/colonialwars-client/tree/324deddb222f138ea8e41c2ed6683853a599bfb0
-[Unreleased]: https://github.com/Take-Some-Bytes/colonialwars-client/tree/main
+[v0.5.4]: https://github.com/Take-Some-Bytes/colonialwars-client/tree/main
