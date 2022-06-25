@@ -56,9 +56,10 @@ function getKeyBindings () {
  * @prop {(page: symbol, opts: any) => void} setPage
  *
  * @typedef {Object} MapData
+ * @prop {Array<any>} obstacles
+ * @prop {Array<any>} decorations
+ * @prop {'grass'|'sand'} tileType
  * @prop {Readonly<import('../game/game').WorldLimits>} worldLimits
- * @prop {{}} staticMapElems
- * @prop {'grass'|'sand'} mapTheme
  */
 
 /**
@@ -159,11 +160,7 @@ export default class PlayApp {
       this.conn.on(communications.CONN_READY_ACK, mapData => {
         clearTimeout(readyAckTimeout)
         debug('%O', mapData)
-        resolve({
-          worldLimits: Object.freeze(mapData.worldBounds),
-          staticMapElems: mapData.static,
-          mapTheme: mapData.mapTheme
-        })
+        resolve(mapData)
       })
     })
   }

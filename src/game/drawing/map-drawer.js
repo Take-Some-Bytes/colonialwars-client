@@ -13,13 +13,8 @@ import * as numberUtils from '../../helpers/number-utils.js'
 const debug = debugFactory('cw-client:map-drawer')
 
 /**
- * @typedef {Object} MapConfig
- * @prop {'grass'|'sand'} mapTheme
- * @prop {{}} staticElems
- * @prop {Readonly<import('../game').WorldLimits>} worldLimits
- *
  * @typedef {Object} MapDrawerOptions
- * @prop {MapConfig} mapConfig
+ * @prop {import('../../apps/play-app')} mapData
  * @prop {import('../viewport').default} viewport
  * @prop {import('../../helpers/image-helpers').ImageLoader} imgLoader
  * ImageLoader class to load images.
@@ -38,12 +33,12 @@ export default class MapDrawer {
    */
   constructor (options) {
     const {
-      mapConfig, imgLoader, viewport,
+      mapData, imgLoader, viewport,
       gameCanvasContext
     } = options
 
     this.viewport = viewport
-    this.mapConfig = mapConfig
+    this.mapData = mapData
     this.imgLoader = imgLoader
     this.gameCtx = gameCanvasContext
 
@@ -96,7 +91,7 @@ export default class MapDrawer {
   async init () {
     if (this.initialized) { return }
 
-    const worldLimits = this.mapConfig.worldLimits
+    const worldLimits = this.mapData.worldLimits
     const end = Vector2D.zero()
     const halvedWorldLimits = Vector2D.sub(
       worldLimits, Vector2D.fromArray([worldLimits.x / 2, worldLimits.y / 2])
@@ -123,7 +118,7 @@ export default class MapDrawer {
     }
 
     await this._drawTiles(
-      this.mapConfig.mapTheme, this.workCtx,
+      this.mapData.tileType, this.workCtx,
       { x: 0, y: 0 }, end
     )
 
@@ -138,7 +133,7 @@ export default class MapDrawer {
       // The map was halved, so finish drawing it.
       this.workCtx.clearRect(0, 0, this.workCanvas.width, this.workCanvas.height)
       await this._drawTiles(
-        this.mapConfig.mapTheme, this.workCtx,
+        this.mapData.tileType, this.workCtx,
         { x: 0, y: 0 }, end
       )
       this.tileChunkSplitter.addChunks(this.workCanvas)
@@ -173,8 +168,8 @@ export default class MapDrawer {
     ))
     const start = Vector2D.floorAxes(this.viewport.toCanvas({ x: 0, y: 0 }))
     const end = Vector2D.floorAxes(this.viewport.toCanvas({
-      x: this.mapConfig.worldLimits.x,
-      y: this.mapConfig.worldLimits.y
+      x: this.mapData.worldLimits.x,
+      y: this.mapData.worldLimits.y
     }))
     let chunkID = -1
     // let i = 0

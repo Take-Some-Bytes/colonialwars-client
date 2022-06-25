@@ -82,14 +82,14 @@ export default class Drawing {
    * Factory method for creating a Drawing class. This is asynchronous since
    * the initialization of the Drawing class is asynchronous.
    * @param {CanvasRenderingContext2D} ctx The canvas context to draw on.
-   * @param {import('./map-drawer').MapConfig} mapConfig The map's configurations.
+   * @param {import('../../apps/play-app').MapData} mapData The map's configurations.
    * @param {import('../viewport').default} viewport The viewport object to translate
    * game coordinates to canvas coordinates.
    * @param {import('../../helpers/display-utils').ViewportDimensions} vwDimensions
    * The ViewportDimensions object for getting the current viewport dimensions.
    * @returns {Promise<Drawing>}
    */
-  static async create (ctx, mapConfig, viewport, vwDimensions) {
+  static async create (ctx, mapData, viewport, vwDimensions) {
     const absGameImgDir = `${window.location.origin}${constants.IMG_CONSTANTS.GAME_IMAGE_DIR}/`
     debug(absGameImgDir)
     const imgLoader = new ImageLoader({
@@ -98,7 +98,7 @@ export default class Drawing {
     const mapDrawer = new MapDrawer({
       gameCanvasContext: ctx,
       imgLoader,
-      mapConfig,
+      mapData,
       viewport
     })
     const drawing = new Drawing({

@@ -295,14 +295,14 @@ export default class Game {
    * Factory method for creating a Game class.
    * @param {CanvasRenderingContext2D} ctx The canvas context to work with.
    * @param {import('../cwdtp/conn').default} conn The CWDTP connection to use.
-   * @param {import('./drawing/map-drawer').MapConfig} mapConfig
+   * @param {import('../apps/play-app').MapData} mapData
    * @param {GameKeyBindings} keyBindings The client's keybindings.
    * @param {import('../helpers/display-utils').ViewportDimensions} vwDimensions
    * @returns {Promise<Game>}
    */
-  static async create (ctx, conn, mapConfig, keyBindings, vwDimensions) {
+  static async create (ctx, conn, mapData, keyBindings, vwDimensions) {
     const viewport = Viewport.create(ctx.canvas)
-    const drawing = await Drawing.create(ctx, mapConfig, viewport, vwDimensions)
+    const drawing = await Drawing.create(ctx, mapData, viewport, vwDimensions)
     const inputManager = InputManager.create(
       keyBindings.directionBindings, document, ctx.canvas
     )
@@ -312,7 +312,7 @@ export default class Game {
       drawing,
       viewport,
       inputManager,
-      worldLimits: mapConfig.worldLimits
+      worldLimits: mapData.worldLimits
     })
     game.init()
 
