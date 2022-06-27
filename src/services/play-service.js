@@ -31,7 +31,10 @@ const GameInfoSchema = JoiWithCoercion.object({
   id: JoiWithCoercion.alternatives(JoiWithCoercion.string(), JoiWithCoercion.number()),
   name: JoiWithCoercion.string(),
   mode: JoiWithCoercion.string().insensitive().valid('teams', 'koth', 'siege'),
-  teams: JoiWithCoercion.array().items(JoiWithCoercion.string()),
+  teams: JoiWithCoercion.array().items(JoiWithCoercion.object({
+    name: JoiWithCoercion.string(),
+    full: JoiWithCoercion.boolean()
+  })),
   description: JoiWithCoercion.string(),
   capacity: JoiWithCoercion.object({
     max: JoiWithCoercion.number(),

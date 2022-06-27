@@ -46,6 +46,7 @@ const selectGameForm = (() => {
  * @typedef {import('../helpers/loaders').CWServerStatus} CWServerStatus
  * @typedef {import('../helpers/loaders').GameInfo} GameInfo
  * @typedef {import('../apps/lobby-app').PlayOpts} PlayOpts
+ * @typedef {import('../helpers/loaders').Team} Team
  *
  * @typedef {Object} RadioButtonListChangeData
  * @prop {HTMLInputElement} inputSelected
@@ -107,7 +108,7 @@ export default class PlayDialog {
     this.games = []
     /**
      * List of teams available for the current game.
-     * @type {Array<string>}
+     * @type {Array<Team>}
      */
     this.teams = []
 
@@ -143,6 +144,8 @@ export default class PlayDialog {
       name: document.querySelector('#name-input').value,
       server: this.serverSelect?.selected
     }
+    debug('Player name: %s; Server URL: %s', data.name, data.server)
+
     const result = PlayService.validateServerPickerData(data)
     if (result.error) {
       debug('Input failed validation. Error is: %O', result.error)
@@ -191,7 +194,9 @@ export default class PlayDialog {
       game: this.gamesList?.selected,
       team: this.teamSelect?.selected
     }
-    const result = PlayService.validateGamePickerData(data, this.teams)
+    debug('Game data: %O; Team selected: %s', JSON.parse(data.game), data.team)
+
+    const result = PlayService.validateGamePickerData(data, this.teams.map(t => t.name))
     if (result.error) {
       debug('Input failed validation. Error is: %O', result.error)
       if (!data.game) {
@@ -364,7 +369,7 @@ export default class PlayDialog {
   /**
    * Creates the teams selection menu.
    * @param {HTMLSelectElement} selectElem The select element to use.
-   * @param {Array<string>} teams An array of teams that are available.
+   * @param {Array<Team>} teams An array of teams that are available.
    * @returns {Selectmenu}
    * @private
    */
@@ -375,16 +380,20 @@ export default class PlayDialog {
       .set('width', SELECTMENU_DIMENSIONS.width)
       .set('show', true)
 
+    let selectedSet = false
     for (const [i, team] of teams.entries()) {
-      select.options.set(`team-${i}`, {
-        value: team,
-        content: team,
-        selected: i === 0,
-        /**
-         * TODO: Find some way to disable teams if they are full.
-         * (08/28/2021) Take-Some-Bytes */
-        disabled: false
-      })
+      const opts = {
+        value: team.name,
+        content: team.name,
+        selected: false,
+        disabled: team.full
+      }
+      if (!team.full && !selectedSet) {
+        selectedSet = true
+        opts.selected = true
+      }
+
+      select.options.set(`team-${i}`, opts)
     }
 
     select.update()

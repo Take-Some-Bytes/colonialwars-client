@@ -14,11 +14,15 @@ import constants from '../constants.js'
  * @prop {string} location
  * @prop {boolean} available
  *
+ * @typedef {Object} Team
+ * @prop {string} name
+ * @prop {boolean} full
+ *
  * @typedef {Object} GameInfo
  * @prop {string} id
  * @prop {string} name
  * @prop {GameMode} mode
- * @prop {Array<string>} teams
+ * @prop {Array<Team>} teams
  * @prop {string} description
  * @prop {Object} capacity
  * @prop {number} capacity.max
