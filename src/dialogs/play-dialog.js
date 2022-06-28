@@ -355,7 +355,8 @@ export default class PlayDialog {
       radioList.setRadioButton(`game-${i}`, {
         checked: false,
         value: JSON.stringify(game),
-        labelContent: game.name
+        labelContent: game.name,
+        disabled: game.capacity.current === game.capacity.max
       })
     }
 
