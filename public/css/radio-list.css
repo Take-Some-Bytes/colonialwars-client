@@ -14,6 +14,12 @@
   width: 250px;
   position: relative;
 }
+.radio-list__item--disabled,
+.radio-list__item--disabled:hover {
+  cursor: not-allowed !important;
+  opacity: 0.5 !important;
+  background-color: rgb(246, 246, 246) !important;
+}
 .radio-list__item input {
   position: absolute;
   opacity: 0;

@@ -14,6 +14,7 @@ import EventEmitter from '../helpers/event-emitter.js'
  * @prop {string} value
  * @prop {string} labelContent
  * @prop {boolean} checked
+ * @prop {boolean} disabled
  */
 
 /**
@@ -159,7 +160,14 @@ export default class RadioButtonList extends EventEmitter {
     if (item instanceof HTMLLabelElement && input instanceof HTMLInputElement) {
       input.value = opts.value
       input.checked = opts.checked
+      input.disabled = opts.disabled
+      if (opts.disabled) {
+        item.classList.add('radio-list__item--disabled')
+      } else {
+        item.classList.remove('radio-list__item--disabled')
+      }
       removeAllChildNodes(item)
+
       item.appendChild(document.createTextNode(opts.labelContent))
       item.appendChild(input)
       item.appendChild(RadioButtonList.ELEMS.checkmarkSpan.cloneNode(true))
@@ -173,6 +181,7 @@ export default class RadioButtonList extends EventEmitter {
       input.type = 'radio'
       input.name = this.name
       input.checked = opts.checked
+      input.disabled = opts.disabled
       input.value = opts.value
       item.style.display = 'block'
       item.classList.add(
@@ -182,9 +191,16 @@ export default class RadioButtonList extends EventEmitter {
         'ui-content--radius',
         'ui-content--light'
       )
+      if (opts.disabled) {
+        item.classList.add('radio-list__item--disabled')
+      } else {
+        item.classList.remove('radio-list__item--disabled')
+      }
+
       item.appendChild(document.createTextNode(opts.labelContent))
       item.appendChild(input)
       item.appendChild(RadioButtonList.ELEMS.checkmarkSpan.cloneNode(true))
+
       this._attachEventListeners(item)
 
       this.listContainer.appendChild(item)
