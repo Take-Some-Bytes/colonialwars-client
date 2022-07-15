@@ -117,7 +117,7 @@ export default class LobbyApp {
       servers = await loaders.loadCWServers()
     } catch (ex) {
       // Failed to load server list.
-      console.error(ex.stack)
+      console.error(ex)
       this.error = new Error('Failed to load server list.')
       this._showError()
     }

@@ -102,7 +102,7 @@ export async function getGameAuth (serverUrl, opts) {
     res = await fetch(url, loaders.FETCH_CONFIG)
   } catch (ex) {
     // fetch() errored out.
-    console.error(ex.stack)
+    console.error(ex)
     throw new Error('Something went wrong. Please try again later.')
   }
 

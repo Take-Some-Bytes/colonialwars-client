@@ -196,7 +196,7 @@ export default class PlayApp {
         ? 'wss:'
         : 'ws:'
     } catch (ex) {
-      console.error(ex.stack)
+      console.error(ex)
       this.error = new Error('Something went wrong. Please try again later.')
       this._showError()
       return

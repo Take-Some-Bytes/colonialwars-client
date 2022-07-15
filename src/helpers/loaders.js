@@ -117,7 +117,7 @@ export async function loadServerStatus (server) {
     }
   } catch (ex) {
     // No big deal. Just assume that the server isn't available.
-    console.error(ex.stack)
+    console.error(ex)
     return {
       name: server.serverName,
       location: null,
