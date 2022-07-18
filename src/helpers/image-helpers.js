@@ -10,6 +10,9 @@ const debug = debugFactory('cw-client:image-helpers')
 /**
  * @typedef {Object} ImageLoaderOptions
  * @prop {string} baseURL The URL to load images relative from.
+ *
+ * @typedef {Object} SliceOpts
+ * @prop {boolean} [force] Whether to force the image slice.
  */
 
 /**
@@ -102,6 +105,79 @@ export class ImageLoader {
     // image was requested while it was already loading, we won't duplicate
     // our image requests.
     this._loadingImgs.set(path, promise)
+
+    return promise
+  }
+}
+
+/**
+ * ImageSlicer class to help with slicing images.
+ */
+export class ImageSlicer {
+  /**
+   * Creates a new ImageSlicer for the specified image.
+   *
+   * Besides slicing images, this class also caches sliced images so work isn't
+   * repeated.
+   * @param {HTMLImageElement} image The image to operate on.
+   */
+  constructor (image) {
+    this.image = image
+
+    /**
+     * A cache of all the images we've sliced so far.
+     * @type {Map<string, ImageBitmap>}
+     */
+    this._sliceCache = new Map()
+
+    /**
+     * A map of all the slices that are currently loading.
+     * @type {Map<string, Promise<ImageBitmap>>}
+     */
+    this._loadingSlices = new Map()
+  }
+
+  /**
+   * Slices the image, starting and ending at the specified coordinates.
+   *
+   * If ``opts.force`` is true, will slice the image again even if it's already
+   * been sliced and cached.
+   *
+   * Returns an ``ImageBitmap`` of the sliced image.
+   * @param {number} startX The starting X position.
+   * @param {number} startY The starting Y position.
+   * @param {number} width The width of the slice
+   * @param {number} height The height of the slice.
+   * @param {SliceOpts} [opts={}] Optional options.
+   * @returns {Promise<ImageBitmap>}
+   */
+  slice (startX, startY, width, height, opts = {}) {
+    const sliceId = `${startX}${startY}${width}${height}`
+
+    if (this._sliceCache.has(sliceId) && !opts.force) {
+      return Promise.resolve(this._sliceCache.get(sliceId))
+    } else if (this._loadingSlices.has(sliceId)) {
+      return this._loadingSlices.get(sliceId)
+    }
+
+    debug('Slicing image %o with opts: %o', this.image, {
+      startX, startY, width, height
+    })
+
+    const promise = (async () => {
+      const res = await createImageBitmap(
+        this.image, startX, startY, width, height
+      )
+
+      // Put the loaded slice into the cache, and
+      // mark this slice as not loading anymore.
+      this._sliceCache.set(sliceId, res)
+      this._loadingSlices.delete(sliceId)
+
+      return res
+    })()
+
+    this._loadingSlices.set(sliceId, promise)
 
     return promise
   }
