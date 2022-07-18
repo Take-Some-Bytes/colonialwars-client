@@ -50,15 +50,33 @@ function getKeyBindings () {
 
 /**
  * @typedef {import('./app').PlayOpts} PlayOpts
+ * @typedef {Record<'x'|'y'|'w'|'h', number>} StaticImage
+ * @typedef {Record<'x'|'y'|'w'|'h'|'frameSize', number>} DynAnimation
+ * @typedef {'mainImg'|'damaged1Img'|'damaged2Img'|'constructing1Img'} StaticImgKeys
+ * @typedef {'die'|'idle'|'walk'|'attack'|'reload'|'busy'|
+ * 'cast'|'busyDamaged1'|'busyDamaged2'} DynAnimationKeys
  *
  * @typedef {Object} PlayAppOptions
  * @prop {import('../helpers/display-utils').ViewportDimensions} vwDimensions
  * @prop {(page: symbol, opts: any) => void} setPage
  *
+ * @typedef {Object} Graphic
+ * @prop {string} id
+ * @prop {string} name
+ * @prop {string} file
+ * @prop {number} angles
+ * @prop {boolean} hasAnimations
+ * @prop {StaticImage} mainImg
+ * @prop {StaticImage} damaged1Img
+ * @prop {StaticImage} damaged2Img
+ * @prop {StaticImage} constructing1Img
+ * @prop {Record<DynAnimationKeys, DynAnimation>} animations
+ *
  * @typedef {Object} MapData
  * @prop {Array<any>} obstacles
  * @prop {Array<any>} decorations
  * @prop {'grass'|'sand'} tileType
+ * @prop {Record<string, Graphic>} graphicsData
  * @prop {Readonly<import('../game/game').WorldLimits>} worldLimits
  */
 
@@ -159,7 +177,7 @@ export default class PlayApp {
       this.conn.emit(communications.CONN_READY)
       this.conn.on(communications.CONN_READY_ACK, mapData => {
         clearTimeout(readyAckTimeout)
-        debug('%O', mapData)
+        debug('Map data: %O', mapData)
         resolve(mapData)
       })
     })
@@ -207,16 +225,15 @@ export default class PlayApp {
       .then(() => this._initCanvas())
       .then(() => this._emitReady())
       .then(mapData => {
-        return [mapData, getKeyBindings()]
-      })
-      .then(([mapData, bindings]) => {
-        return Game.create(
-          this.canvas.getContext('2d'), this.conn,
-          mapData, bindings, this.vwDimensions
-        )
+        return Game.create({
+          context: this.canvas.getContext('2d'),
+          vwDimensions: this.vwDimensions,
+          conn: this.conn,
+          mapData
+        })
       })
       .then(game => { this.game = game })
-      .then(() => this.game.run())
+      .then(() => this.game.start())
       .then(() => {
         // Hide loading screen.
         const loadingElem = document.getElementById('loading-screen')
