@@ -3,52 +3,22 @@
  * @fileoverview InputManager class to manage and report the current client inputs.
  */
 
-import Vector2D from '../physics/vector2d.js'
-import InputTracker from './input-tracker.js'
+import debugFactory from 'debug'
+
 import EventEmitter from '../../helpers/event-emitter.js'
 
-/**
- * @typedef {Record<string, Array<string>>} KeyBindings
- * @typedef {Record<'up'|'down'|'left'|'right', Array<string>>} DirectionBindings
- *
- * @typedef {Object} InputState
- * @prop {BasicInputState} basic
- *
- * @typedef {Object} DirectionState
- * @prop {boolean} up
- * @prop {boolean} down
- * @prop {boolean} left
- * @prop {boolean} right
- *
- * @typedef {Object} MouseState
- * @prop {boolean} leftMousePressed
- * @prop {boolean} rightMousePressed
- * @prop {Vector2D} mouseCoords
- *
- * @typedef {Object} BasicInputState
- * @prop {DirectionState} directionData
- * @prop {MouseState} mouseData
- *
- * @typedef {Object} InputManagerOptions
- * @prop {InputTracker} inputTracker The input tracker object to use.
- * @prop {DirectionBindings} directionBindings
- */
+const debug = debugFactory('cw-client:input:manager')
 
 /**
- * Array of valid directions.
- * @type {[
- * 'up',
- * 'down',
- * 'left',
- * 'right'
- * ]}
+ * @typedef {Object} InputState
+ * @prop {null} mouse
+ * @prop {Record<string, boolean>} keys An object of which bindings have and have
+ * not been toggled.
+ *
+ * @typedef {Object} InputManagerOptions
+ * @prop {import('./input-tracker').default} tracker The input tracker object to use.
+ * @prop {DirectionBindings} directionBindings
  */
-export const VALID_DIRECTIONS = [
-  'up',
-  'down',
-  'left',
-  'right'
-]
 
 /**
  * InputManager class.
@@ -60,15 +30,21 @@ export default class InputManager extends EventEmitter {
    * @param {InputManagerOptions} opts Options.
    */
   constructor (opts) {
-    const { inputTracker, directionBindings } = opts
+    const { tracker } = opts
 
     super()
 
-    this.tracker = inputTracker
-    this.mouseClicks = 0
-    this.directionBindings = directionBindings
+    this._mouseClicks = 0
+    this._tracker = tracker
 
-    this.tracker.on('input', this._onInput.bind(this))
+    /**
+     * A map of all the bound keys and their respective names.
+     * @type {Map<string, string>}
+     * @private
+     */
+    this._bindings = new Map()
+
+    this._tracker.on('input', this._onInput.bind(this))
   }
 
   /**
@@ -78,62 +54,62 @@ export default class InputManager extends EventEmitter {
    */
   _onInput (state) {
     if (state.inputType === 'mouse') {
-      // Ignore mouse input events for now.
+      // Ignore mouse input for now.
       return
     }
-    const directionData = this._getDirectionState(state.keysPressed)
 
-    this.emit('input', {
-      basic: {
-        directionData
-      }
-    })
+    const ret = {
+      mouse: null,
+      keys: {}
+    }
+    for (const [key, name] of this._bindings.entries()) {
+      ret.keys[name] = state.keysPressed.includes(key)
+    }
+
+    this.emit('input', ret)
   }
 
   /**
-   * Gets the direction state.
-   * @param {Array<string>} keysPressed The keys that were pressed.
-   * @returns {DirectionState}
-   * @private
+   * Binds the specified key to a name.
+   *
+   * Whenever the key is pressed/unpressed, the name will be used to refer to it.
+   * @param {string} key The key to bind.
+   * @param {string} to The name of the binding.
    */
-  _getDirectionState (keysPressed) {
-    const state = {
-      up: false,
-      down: false,
-      left: false,
-      right: false
+  bind (key, to) {
+    if (this._bindings.has(key)) {
+      throw new Error('Binding already exists!')
     }
 
-    const directions = Object.keys(this.directionBindings)
-    for (const direction of directions) {
-      if (!VALID_DIRECTIONS.includes(direction)) {
-        continue
-      }
+    this._bindings.set(key, to)
 
-      const bindings = this.directionBindings[direction]
-      for (const binding of bindings) {
-        if (keysPressed.includes(binding)) {
-          state[direction] = true
-        }
-        /**
-         * XXX: See if we'll need to set the respective state prop to false.
-         * (04/19/2021) Take-Some-Bytes */
-      }
-    }
-
-    return state
+    debug('Bound key "%s" to name "%s"', key, to)
   }
 
   /**
-   * Factory method for creating an InputManager.
-   * @param {DirectionBindings} directionBindings The key bindings for movement.
-   * @param {Element} keyElem The element to track key presses on.
-   * @param {Element} mouseElem The element to track mouse input on.
+   * Unbinds the specified key.
+   *
+   * This allows keys to be bound again at a later time.
+   * @param {string} key The key to unbind.
    */
-  static create (directionBindings, keyElem, mouseElem) {
-    return new InputManager({
-      inputTracker: InputTracker.create(keyElem, mouseElem),
-      directionBindings
-    })
+  unbind (key) {
+    this._bindings.delete(key)
+
+    debug('Unbound key "%s"', key)
+  }
+
+  /**
+   * Gets the key associated with the specified binding, or null if none exists.
+   * @param {string} binding The name of the binding.
+   * @returns {string|null}
+   */
+  getKey (binding) {
+    for (const [key, name] of this._bindings.entries()) {
+      if (name === binding) {
+        return key
+      }
+    }
+
+    return null
   }
 }
