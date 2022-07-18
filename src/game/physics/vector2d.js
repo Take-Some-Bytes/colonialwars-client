@@ -3,6 +3,8 @@
  * @fileoverview Vector2D class for simple 2D physics manipulation.
  */
 
+import { bound } from '../../helpers/number-utils.js'
+
 /**
  * @typedef {{ x?: number; y?: number }} Vector2DLike
  */
@@ -127,5 +129,14 @@ export default class Vector2D {
    */
   copy () {
     return new Vector2D(this.x, this.y)
+  }
+
+  /**
+   * Binds this Vector2D to the specified bounds.
+   * @param {Vector2DLike} bounds The bounds to bind to.
+   */
+  boundTo (bounds) {
+    this.x = bound(this.x, 0, bounds.x)
+    this.y = bound(this.y, 0, bounds.y)
   }
 }
