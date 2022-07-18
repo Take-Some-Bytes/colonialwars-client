@@ -5,28 +5,26 @@
 
 import constants from '../constants.js'
 import Vector2D from './physics/vector2d.js'
-import BoundEntity from './physics/bound-entity.js'
 
 /**
  * Viewport class.
- * @extends BoundEntity
  */
-export default class Viewport extends BoundEntity {
+export default class Viewport {
   /**
-   * Constructor for a Viewport object. The position of the viewport will hold
-   * the absolute world coordinates for the top left of the view (which
-   * correspond to canvas coordinates ``[width / 2, height / 2]``).
-   * @class
-   * @param {Vector2D} position The starting position of the viewport.
-   * @param {Vector2D} velocity The starting velocity of the viewport.
-   * @param {number} canvasWidth The width of the canvas for this viewport.
-   * @param {number} canvasHeight The height of the canvas for this viewport.
+   * Constructor for a Viewport object.
+   *
+   * The position of the viewport will hold the absolute world coordinates for
+   * the top left of the view (which correspond to canvas coordinates
+   * ``[width / 2, height / 2]``).
+   * @param {HTMLCanvasElement} canvas The canvas element this viewport will take
+   * the height and width from.
    */
-  constructor (position, velocity, canvasWidth, canvasHeight) {
-    super(position, velocity)
+  constructor (canvas) {
+    this.position = Vector2D.zero()
+    this.velocity = Vector2D.zero()
+    this.canvasOffset = new Vector2D(canvas.width / 2, canvas.height / 2)
 
     this.playerPosition = null
-    this.canvasOffset = new Vector2D(canvasWidth / 2, canvasHeight / 2)
   }
 
   /**
@@ -68,18 +66,5 @@ export default class Viewport extends BoundEntity {
    */
   toWorld (position) {
     return Vector2D.add(position, this.position)
-  }
-
-  /**
-   * Factory method for a Viewport object.
-   * @param {HTMLCanvasElement} canvas
-   * The canvas element to attach this viewport object to.
-   * @returns {Viewport}
-   */
-  static create (canvas) {
-    return new Viewport(
-      Vector2D.zero(), Vector2D.zero(),
-      canvas.width, canvas.height
-    )
   }
 }

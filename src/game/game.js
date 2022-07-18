@@ -4,15 +4,33 @@
  */
 
 import debugFactory from 'debug'
+
 import constants from '../constants.js'
-import Drawing from './drawing/drawing.js'
+// import Drawing from './drawing/drawing.js'
+import World from '../ecs/world.js'
 import Viewport from './viewport.js'
 import InputManager from './input/input-manager.js'
-import Player from './player.js'
-import Vector2D from './physics/vector2d.js'
+import InputTracker from './input/input-tracker.js'
+
+import PlayerComponent from './components/player'
+import * as PhysicsComponents from './components/physics'
+import * as PlayerSystems from './systems/player.js'
+import Renderer from './render/renderer.js'
+import GraphicsStore from './render/graphics-store.js'
+import { ImageLoader } from '../helpers/image-helpers.js'
+// import Player from './player.js'
+// import Vector2D from './physics/vector2d.js'
 
 const { COMMUNICATIONS: communications } = constants
 const debug = debugFactory('cw-client:client-game')
+
+const SELF_ID = '@self'
+const COMPONENT_MAP = {
+  physicalProps: PhysicsComponents.PhysicalProps,
+  transform2d: PhysicsComponents.Transform2d,
+  velocity2d: PhysicsComponents.Velocity2d,
+  player: PlayerComponent
+}
 
 /**
  * @typedef {Object} WorldLimits
@@ -24,23 +42,17 @@ const debug = debugFactory('cw-client:client-game')
  * @prop {import('./physics/vector2d').default} velocity
  * @prop {number} lastProcessedInput
  * @prop {number} speed
- *
- * @typedef {Object} GameOptions
- * @prop {import('../cwdtp/conn').default} conn The CWDTP connection to use.
- * @prop {import('./input/input-manager').default} inputManager
- * The input manager to use.
- * @prop {Readonly<WorldLimits>} worldLimits
- * @prop {{}} staticMapElems
- * @prop {'grass'|'sand'} mapTheme
- * @prop {import('./viewport').default} viewport
- * @prop {import('./drawing/drawing').default} drawing The Drawing object to use.
- * @prop {import('../helpers/display-utils').ViewportDimensions} viewportDimensions
+ * @prop {string} name
+ * @prop {string} team
  *
  * @typedef {Object} GameState
  * @prop {PlayerStats} self
  *
- * @typedef {Object} GameKeyBindings
- * @prop {import('./input/input-manager').DirectionBindings} directionBindings
+ * @typedef {Object} GameOpts
+ * @prop {CanvasRenderingContext2D} context
+ * @prop {import('../cwdtp/conn').default} conn
+ * @prop {import('../apps/play-app').MapData} mapData
+ * @prop {import('../helpers/display-utils').ViewportDimensions} vwDimensions
  */
 
 /**
@@ -49,78 +61,90 @@ const debug = debugFactory('cw-client:client-game')
 export default class Game {
   /**
    * Constructor for a Game class. The Game class manages the Colonial Wars
-   * game client.
-   * @param {GameOptions} opts Options.
+   * game client's communcations, prediction, and rendering.
+   * @param {GameOpts} opts Required options.
    */
   constructor (opts) {
-    const {
-      conn, drawing, mapTheme, viewport, worldLimits, inputManager,
-      staticMapElems, viewportDimensions
-    } = opts
+    this._conn = opts.conn
+    this._mapData = opts.mapData
 
-    this.conn = conn
-    this.drawing = drawing
-    // this.mapTheme = mapTheme
-    this.viewport = viewport
-    this.worldLimits = worldLimits
-    this.inputManager = inputManager
-    // this.staticMapElems = staticMapElems
-    // this.viewportDimensions = viewportDimensions
-
-    this.self = null
-    this.lastUpdateTime = 0
-    this.deltaTime = 0
-    /**
-     * Array of inputs that still have not been processed by us.
-     * @type {Array<import('./input/input-manager').InputState>}
-     */
-    this.unprocessedInputs = []
-    this.lastProcessedInput = 0
-    this.inputNum = 0
-    this.animationFrameID = null
+    this._imgLoader = new ImageLoader({
+      baseURL: `${window.location.origin}${constants.IMG_CONSTANTS.GAME_IMAGE_DIR}/`
+    })
+    this._viewport = new Viewport(opts.context.canvas)
+    this._graphicsStore = new GraphicsStore({
+      graphicsData: opts.mapData.graphicsData,
+      imgLoader: this._imgLoader
+    })
+    this._inputManager = new InputManager({
+      tracker: InputTracker.create(document, opts.context.canvas)
+    })
+    this._renderer = new Renderer({
+      context: opts.context,
+      mapData: opts.mapData,
+      viewport: this._viewport,
+      vwDimensions: opts.vwDimensions,
+      graphicsStore: this._graphicsStore
+    })
 
     /**
-     * The game state that has yet to be processed by this client.
-     * @type {GameState}
+     * The ID of the player entity in our ECS world.
+     * @type {number|null}
      */
-    this.stateToProcess = null
+    this._self = null
+    this._animationFrameID = null
+    this._initialized = false
+
     /**
-     * This stores the input we'll need to send. It's not a list because that
-     * will make client-side prediction a nightmare.
-     * @type {import('../game/input/input-manager').InputState}
+     * The ECS world where all the entities of the game are going to live.
+     * @private
      */
-    this.inputToSend = null
+    this._world = new World()
+    this._worldInitialized = false
+
+    /**
+     * An array of pending messages from the server.
+     * @type {Array<GameState>}
+     */
+    this._inboundMsgs = []
+    /**
+     * An array of messages that still need to be sent to the server.
+     * @type {Array<any>}
+     */
+    this._outboundMsgs = []
+
+    this._inputNum = 0
+    this._lastUpdateTime = 0
   }
+
+  // ================ Private event handling ================ //
 
   /**
    * Handles client input.
-   * @param {import('../game/input/input-manager').InputState} state
+   * @param {import('./input/input-manager').InputState} state
    * The current input state
    * @private
    */
   _onInput (state) {
-    if (this.self) {
-      this.inputNum++
-      const packagedInput = {
-        inputNum: this.inputNum,
-        timestamp: Date.now(),
-        direction: state.basic.directionData
-      }
-      // // Perform client-side prediction.
-      this.self.addInputToQueue(packagedInput)
-      this.self.updateVelocity(state)
-      this.self.pendingInput = packagedInput
-      // // this.self.update(packagedInput.timestamp)
-      // const deltaTime = packagedInput.timestamp - this.self.lastInputProcessTime
-      // this.self.lastInputProcessTime = packagedInput.timestamp
-
-      // this.self._update(deltaTime)
-      // const packagedInput = this.self.update(state)
-      // this.self.addInputToQueue(packagedInput)
-      this.conn.emit(communications.CONN_CLIENT_ACTION, packagedInput)
-      // this.viewport.updateTrackingPosition(this.self.position)
+    if (!this._self) {
+      return
     }
-    // this.inputToSend = state
+
+    this._inputNum++
+    const packagedInput = {
+      inputNum: this._inputNum,
+      timestamp: Date.now(),
+      direction: {
+        up: state.keys.up,
+        down: state.keys.down,
+        left: state.keys.left,
+        right: state.keys.right
+      }
+    }
+
+    const queue = this._world.getComponent('player', { from: this._self }).inputQueue
+    queue.push(packagedInput)
+    this._outboundMsgs.push(packagedInput)
   }
 
   /**
@@ -129,192 +153,260 @@ export default class Game {
    * @private
    */
   _onGameState (state) {
-    /**
-     * @type {GameState}
-     */
-    const parsed = JSON.parse(state)
-    if (!this.self) {
-      this.self = Player.create(Vector2D.fromObject(parsed.self.position), parsed.self.speed, {
-        x: { MIN: 0, MAX: this.worldLimits.x },
-        y: { MIN: 0, MAX: this.worldLimits.y }
-      })
-    }
-    this.self.acceptAuthoritarianState(parsed.self)
-
-    // this.viewport.updateTrackingPosition(this.self.position)
-    // debug('Server-sent: %o', this.self.position)
-    // this.stateToProcess = JSON.parse(state)
+    this._inboundMsgs.push(state)
   }
 
-  // /**
-  //  * Processes the authoritarian state of the game, as sent by the server.
-  //  * @param {GameState} state The authoritarian state of the game.
-  //  */
-  // processGameState (state) {
-  //   if (!this.self) {
-  //     this.self = Player.create(Vector2D.fromObject(state.self.position), state.self.speed, {
-  //       x: { MIN: 0, MAX: this.worldLimits.x },
-  //       y: { MIN: 0, MAX: this.worldLimits.y }
-  //     })
-  //   }
-  //   this.self.acceptAuthoritarianState(state.self)
-
-  //   this.viewport.updateTrackingPosition(this.self.position)
-  // }
-
-  // /**
-  //  * Processes the current client input.
-  //  * @param {import('./input/input-manager').InputState} state The current input state.
-  //  */
-  // processInput (state) {
-  //   if (this.self) {
-  //     this.lastEmittedInput++
-  //     const packagedInput = {
-  //       inputNum: this.lastEmittedInput,
-  //       timestamp: Date.now(),
-  //       direction: state.basic.directionData
-  //     }
-  //     this.conn.emit(communications.CONN_CLIENT_ACTION, packagedInput)
-  //     // Perform client-side prediction.
-  //     this.self.addInputToQueue(packagedInput)
-  //     this.self.updateVelocity(packagedInput)
-  //     this.self.update()
-  //     // this.self.update(packagedInput.timestamp)
-  //     debug('Input timestamp: %d; Last input process timestamp: %d', packagedInput.timestamp, this.self.lastInputProcessTime)
-  //     // const deltaTime = packagedInput.timestamp - this.self.lastInputProcessTime
-  //     // this.self.lastInputProcessTime = packagedInput.timestamp
-
-  //     // debug('Deltatime: %d', deltaTime)
-  //     // this.self._update(deltaTime)
-  //     this.viewport.updateTrackingPosition(this.self.position)
-  //   }
-  // }
-
-  // /**
-  //  * Performs a client game update.
-  //  */
-  // update () {
-  //   if (this.stateToProcess) {
-  //     this.processGameState(this.stateToProcess)
-  //     this.stateToProcess = null
-  //   }
-
-  //   if (this.inputToSend) {
-  //     this.processInput(this.inputToSend)
-  //     this.inputToSend = null
-  //   }
-  // }
+  // ================ Private update ================ //
 
   /**
-   * Draws the current state of the game onto the game canvas.
+   * Process all messages received from the server.
+   * @private
    */
-  draw () {
-    if (this.self) {
-      this.drawing.clear()
-      this.drawing.drawMap(this.self.position)
+  _processServerMessages () {
+    const msgs = this._inboundMsgs.splice(0)
+
+    for (const state of msgs) {
+      if (!this._self) {
+        this._self = PlayerSystems.createSelf(this._world, {
+          id: SELF_ID,
+          name: state.self.name,
+          team: state.self.team,
+          /**
+           * TODO: Add a config option to change player mass.
+           * (07/15/2022) Take-Some-Bytes */
+          mass: 2,
+          speed: state.self.speed,
+          position: state.self.position
+        })
+      }
+
+      PlayerSystems.acceptAuthoritativeState(state, {
+        world: this._world,
+        playerId: this._self,
+        worldLimits: this._mapData.worldLimits
+      })
     }
   }
+
+  /**
+   * Process all client inputs, and arranges for them to be sent to the server
+   * at the end of this iteration of the update loop.
+   * @param {number} currentTime The current time.
+   * @private
+   */
+  _processInputs (currentTime) {
+    if (!this._self) {
+      return
+    }
+
+    const queue = this._world.getComponent('player', { from: this._self }).inputQueue
+
+    PlayerSystems.processInputs(queue.splice(0), {
+      currentTime,
+      world: this._world,
+      playerId: this._self,
+      worldLimits: this._mapData.worldLimits
+    })
+
+    const transform = this._world.getComponent('transform2d', { from: this._self })
+    this._viewport.updateTrackingPosition(transform.position)
+    this._viewport.update(currentTime - this._lastUpdateTime)
+  }
+
+  /**
+   * Render all the entities onto the screen.
+   * @private
+   */
+  _render () {
+    if (!this._self) {
+      return
+    }
+
+    const transform = this._world.getComponent('transform2d', { from: this._self })
+
+    this._renderer.clear()
+    this._renderer.renderMap(transform.position)
+  }
+
+  /**
+   * Work that needs to be done after everything has been updated.
+   * @param {number} currentTime The current time.
+   * @private
+   */
+  _postUpdate (currentTime) {
+    this._lastUpdateTime = currentTime
+
+    const outbound = this._outboundMsgs.splice(0)
+
+    for (const msg of outbound) {
+      this._conn.emit(communications.CONN_CLIENT_ACTION, msg)
+    }
+  }
+
+  // ================ Private initialization ================ //
+
+  /**
+   * Initializes the ECS world.
+   * @private
+   */
+  _initWorld () {
+    if (this._worldInitialized) {
+      return
+    }
+
+    Object.entries(COMPONENT_MAP).forEach(([name, comp]) => {
+      this._world.registerComponent(name, comp)
+    })
+
+    this._worldInitialized = true
+  }
+
+  /**
+   * Initializes the input manager and input bindings.
+   * @private
+   */
+  _initInput () {
+    // These are hardcoded right now because I don't want to try to load
+    // keybindings right now.
+    this._inputManager.bind('w', 'up')
+    this._inputManager.bind('s', 'down')
+    this._inputManager.bind('a', 'left')
+    this._inputManager.bind('d', 'right')
+  }
+
+  /**
+   * Initializes the Renderer.
+   * @private
+   */
+  async _initRenderer () {
+    const worldLimits = this._mapData.worldLimits
+    // ~16000 pixels is the maximum canvas size in a browser.
+    // We're trying to draw everything onto a canvas and then split it, so
+    // we'll have to work around that limit.
+    const tooBig = worldLimits.x > 15000 || worldLimits.y > 15000
+    const halvedWorldLimits = {
+      x: worldLimits.x / 2,
+      y: worldLimits.y / 2
+    }
+
+    await this._renderer.init({
+      // The renderer chunks the map into "big tiles" for performance reasons;
+      // this function is just meant to tell the renderer what's in those "big tiles".
+      renderMap: async (ctx, opts) => {
+        ctx.canvas.width = tooBig
+          ? halvedWorldLimits.x
+          : worldLimits.x
+        ctx.canvas.height = tooBig
+          ? halvedWorldLimits.y
+          : worldLimits.y
+
+        const start = { x: 0, y: 0 }
+        const end = tooBig ? halvedWorldLimits : worldLimits
+
+        const tileSheet = await this._imgLoader.loadImg('tiles.png')
+        const frameSize = 100
+        const availableFrames = {
+          grass: [0, 0],
+          sand: [1, 0]
+        }
+        const frame = availableFrames[this._mapData.tileType]
+        const tile = await createImageBitmap(
+          tileSheet,
+          // Src-X + Src-Y
+          frame[0] * frameSize, frame[1] * frameSize,
+          // Src width+height.
+          frameSize, frameSize
+        )
+
+        debug(end)
+
+        for (
+          let x = start.x, endX = end.x; x < endX;
+          x += constants.GAME_CONSTANTS.DRAWING_TILE_SIZE
+        ) {
+          for (
+            let y = start.y, endY = end.y; y < endY;
+            y += constants.GAME_CONSTANTS.DRAWING_TILE_SIZE
+          ) {
+            ctx.drawImage(tile, x, y)
+          }
+        }
+      }
+    })
+  }
+
+  // ================ Public initialization ================ //
 
   /**
    * Initializes this Game client.
    */
-  init () {
-    this.inputManager.on('input', this._onInput.bind(this))
-    this.conn.on(communications.CONN_UPDATE, this._onGameState.bind(this))
+  async init () {
+    this._initWorld()
+    this._initInput()
+    this._world.clear()
+
+    await this._initRenderer()
+
+    this._inputManager.on('input', this._onInput.bind(this))
+    this._conn.on(communications.CONN_UPDATE, this._onGameState.bind(this))
+
+    this._initialized = true
 
     debug('Game client initialized.')
   }
 
+  // ================ Public update ================ //
+
   /**
-   * Starts the game animation loop and update loop.
+   * Handles the orchestration of a single animation loop iteration.
+   *
+   * This method listens to the server, performs client-side prediction, renders
+   * entities, and send inputs.
+   *
+   * @param {number} currentTime The current time.
    */
-  run () {
-    const currentTime = Date.now()
-    this.deltaTime = currentTime - this.lastUpdateTime
-    this.lastUpdateTime = currentTime
+  update (currentTime) {
+    this._processServerMessages()
+    this._processInputs(currentTime)
+    this._render()
+    this._postUpdate(currentTime)
+  }
 
-    // this.update()
-    if (this.self) {
-      if (this.inputToSend) {
-        // this.self.setInputToSend(this.inputToSend)
-        // this.inputNum++
-        // const state = this.inputToSend
-        // this.inputToSend = null
-        // const packagedInput = {
-        //   inputNum: this.inputNum,
-        //   timestamp: Date.now(),
-        //   direction: state.basic.directionData
-        // }
-        // // // Perform client-side prediction.
-        // this.self.addInputToQueue(packagedInput)
-        // this.self.updateVelocity(state)
-        // // // this.self.update(packagedInput.timestamp)
-        // // const deltaTime = packagedInput.timestamp - this.self.lastInputProcessTime
-        // // this.self.lastInputProcessTime = packagedInput.timestamp
-
-        // // this.self._update(deltaTime)
-        // // const packagedInput = this.self.update(state)
-        // this.self.addInputToQueue(packagedInput)
-        // this.conn.emit(communications.CONN_CLIENT_ACTION, packagedInput)
-        // // this.self.update()
-        // debug('Client-predicted player position: %o', this.self.position)
-      // this.viewport.updateTrackingPosition(this.self.position)
-      }
-
-      this.self.update()
-      // const inputInfo = this.self.update()
-      // if (inputInfo) {
-      //   debug(inputInfo.delta)
-      //   const packagedInput = {
-      //     inputNum: this.inputNum,
-      //     timestamp: inputInfo.timestamp,
-      //     delta: inputInfo.delta,
-      //     direction: inputInfo.input.basic.directionData
-      //   }
-      //   this.self.addInputToQueue(packagedInput)
-      //   this.conn.emit(communications.CONN_CLIENT_ACTION, packagedInput)
-      // }
-
-      this.viewport.updateTrackingPosition(this.self.position)
-      this.viewport.update(this.deltaTime)
+  /**
+   * Starts the game render and update loop.
+   */
+  start () {
+    if (!this._initialized) {
+      throw new Error('Game is not initialized!')
     }
 
-    this.draw()
+    const _update = () => {
+      this.update(Date.now())
 
-    this.animationFrameID = window.requestAnimationFrame(this.run.bind(this))
+      this._animationFrameID = window.requestAnimationFrame(_update.bind(this))
+    }
+
+    _update()
   }
 
   /**
-   * Stops the game animation and update loop.
+   * Stops the game render and update loop.
    */
   stop () {
-    window.cancelAnimationFrame(this.animationFrameID)
+    window.cancelAnimationFrame(this._animationFrameID)
   }
 
+  // ================ Factory method ================ //
+
   /**
-   * Factory method for creating a Game class.
-   * @param {CanvasRenderingContext2D} ctx The canvas context to work with.
-   * @param {import('../cwdtp/conn').default} conn The CWDTP connection to use.
-   * @param {import('../apps/play-app').MapData} mapData
-   * @param {GameKeyBindings} keyBindings The client's keybindings.
-   * @param {import('../helpers/display-utils').ViewportDimensions} vwDimensions
+   * Factory method for creating and initializing a Game class.
+   * @param {GameOpts} opts Required options.
    * @returns {Promise<Game>}
    */
-  static async create (ctx, conn, mapData, keyBindings, vwDimensions) {
-    const viewport = Viewport.create(ctx.canvas)
-    const drawing = await Drawing.create(ctx, mapData, viewport, vwDimensions)
-    const inputManager = InputManager.create(
-      keyBindings.directionBindings, document, ctx.canvas
-    )
+  static async create (opts) {
+    const game = new Game(opts)
 
-    const game = new Game({
-      conn,
-      drawing,
-      viewport,
-      inputManager,
-      worldLimits: mapData.worldLimits
-    })
-    game.init()
+    await game.init()
 
     return game
   }

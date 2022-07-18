@@ -42,8 +42,10 @@ export default class InputTracker extends EventEmitter {
     * @param {KeyboardEvent} event The event to handle.
     */
   onKeyDown (event) {
-    if (!this.keysPressed.includes(event.key)) {
-      this.keysPressed.push(event.key)
+    const key = event.key.toLowerCase()
+
+    if (!this.keysPressed.includes(key)) {
+      this.keysPressed.push(key)
     }
     const state = {
       inputType: 'key',
@@ -54,7 +56,7 @@ export default class InputTracker extends EventEmitter {
         mouseCoords: this.mousePosition
       }
     }
-    this.emit('keyDown', event.key)
+    this.emit('keyDown', key)
     this.emit('input', state)
   }
 
@@ -63,7 +65,9 @@ export default class InputTracker extends EventEmitter {
     * @param {KeyboardEvent} event The event to handle.
     */
   onKeyUp (event) {
-    this.keysPressed.splice(this.keysPressed.indexOf(event.key), 1)
+    const key = event.key.toLowerCase()
+
+    this.keysPressed.splice(key, 1)
     const state = {
       inputType: 'key',
       keysPressed: this.keysPressed,
@@ -73,7 +77,7 @@ export default class InputTracker extends EventEmitter {
         mouseCoords: this.mousePosition
       }
     }
-    this.emit('keyUp', event.key)
+    this.emit('keyUp', key)
     this.emit('input', state)
   }
 
