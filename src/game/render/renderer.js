@@ -5,9 +5,9 @@
 
 import debugFactory from 'debug'
 
-import Vector2D from '../physics/vector2d.js'
-import split from './splitter.js'
+import { Vector2D } from 'colonialwars-lib/math'
 
+import split from './splitter.js'
 import { inBound } from '../../helpers/number-utils.js'
 
 const debug = debugFactory('cw-client:renderer')
@@ -19,7 +19,7 @@ const debug = debugFactory('cw-client:renderer')
  * @returns {Promise<void>}
  */
 /**
- * @typedef {import('../physics/vector2d').Vector2DLike} Vector2DLike
+ * @typedef {import('colonialwars-lib/math').Vector2DLike} Vector2DLike
  *
  * @typedef {Object} RenderMapOpts
  * @prop {Vector2DLike} mapStart The position to start taking entities from the
@@ -66,7 +66,7 @@ export default class Renderer {
     this._mapChunks = []
     /** Has the map been chunked yet? */
     this._mapChunked = false
-    /** @type {import('../physics/vector2d').Vector2DLike} */
+    /** @type {Vector2DLike} */
     this._chunkSize = null
   }
 

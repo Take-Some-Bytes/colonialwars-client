@@ -5,7 +5,7 @@
 
 import debugFactory from 'debug'
 import constants from '../../constants.js'
-import Vector2D from '../physics/vector2d.js'
+import { Vector2D } from 'colonialwars-lib/math'
 import ChunkSplitter from './chunk-splitter.js'
 
 import * as numberUtils from '../../helpers/number-utils.js'

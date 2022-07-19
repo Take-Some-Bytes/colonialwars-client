@@ -5,21 +5,19 @@
 
 import debugFactory from 'debug'
 
-import constants from '../constants.js'
-// import Drawing from './drawing/drawing.js'
 import World from 'colonialwars-lib/ecs'
+
+import constants from '../constants.js'
 import Viewport from './viewport.js'
 import InputManager from './input/input-manager.js'
 import InputTracker from './input/input-tracker.js'
 
 import PlayerComponent from './components/player'
-import * as PhysicsComponents from './components/physics'
-import * as PlayerSystems from './systems/player.js'
 import Renderer from './render/renderer.js'
 import GraphicsStore from './render/graphics-store.js'
 import { ImageLoader } from '../helpers/image-helpers.js'
-// import Player from './player.js'
-// import Vector2D from './physics/vector2d.js'
+import * as PhysicsComponents from './components/physics'
+import * as PlayerSystems from './systems/player.js'
 
 const { COMMUNICATIONS: communications } = constants
 const debug = debugFactory('cw-client:client-game')
@@ -38,8 +36,8 @@ const COMPONENT_MAP = {
  * @prop {number} y
  *
  * @typedef {Object} PlayerStats
- * @prop {import('./physics/vector2d').default} position
- * @prop {import('./physics/vector2d').default} velocity
+ * @prop {import('colonialwars-lib/math').Vector2D} position
+ * @prop {import('colonialwars-lib/math').Vector2D} velocity
  * @prop {number} lastProcessedInput
  * @prop {number} speed
  * @prop {string} name

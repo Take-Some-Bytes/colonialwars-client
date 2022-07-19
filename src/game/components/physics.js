@@ -3,13 +3,13 @@
  * @fileoverview A bunch of physics-related components.
  */
 
-import Vector2D from '../physics/vector2d.js'
+import { Vector2D } from 'colonialwars-lib/math'
 
 /**
  * @typedef {Record<'mass'|'speed', number>} PhysicalPropsOpts
  *
  * @typedef {Object} Transform2d
- * @prop {import('../physics/vector2d').Vector2DLike} position
+ * @prop {import('colonialwars-lib/math').Vector2DLike} position
  */
 
 /**

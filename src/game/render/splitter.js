@@ -7,7 +7,7 @@ import { findAllDivisors } from '../../helpers/number-utils'
 const debug = debugFactory('cw-client:splitter')
 
 /**
- * @typedef {import('../physics/vector2d').Vector2DLike} Vector2DLike
+ * @typedef {import('colonialwars-lib/math').Vector2DLike} Vector2DLike
  * @typedef {Record<'width'|'height', number>} Dimensions
  *
  * @typedef {Object} SplitOpts

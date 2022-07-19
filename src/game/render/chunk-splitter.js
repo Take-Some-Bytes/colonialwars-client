@@ -4,7 +4,7 @@
  */
 
 import debugFactory from 'debug'
-import Vector2D from '../physics/vector2d.js'
+import { Vector2D } from 'colonialwars-lib/math'
 
 import * as numberUtils from '../../helpers/number-utils.js'
 

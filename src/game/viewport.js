@@ -4,7 +4,7 @@
  */
 
 import constants from '../constants.js'
-import Vector2D from './physics/vector2d.js'
+import { Vector2D } from 'colonialwars-lib/math'
 
 /**
  * Viewport class.
@@ -29,8 +29,7 @@ export default class Viewport {
 
   /**
    * Updates the specified player's tracking position.
-   * @param {import('./physics/vector2d').default} playerPos The player's current
-   * position.
+   * @param {Vector2D} playerPos The player's current position.
    */
   updateTrackingPosition (playerPos) {
     this.playerPosition = Vector2D.sub(playerPos, this.canvasOffset)
