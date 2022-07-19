@@ -11,8 +11,8 @@ const debug = debugFactory('cw-client:systems:player')
 
 /**
  * @typedef {import('../physics/vector2d').Vector2DLike} Vector2DLike
- * @typedef {import('../../ecs/world').EntityType} EntityType
- * @typedef {import('../../ecs/world').default} World
+ * @typedef {import('colonialwars-lib/ecs')} World
+ * @typedef {number} EntityType
  *
  * @typedef {Object} ProcessInputsOpts
  * @prop {World} world

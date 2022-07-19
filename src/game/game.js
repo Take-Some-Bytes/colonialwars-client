@@ -7,7 +7,7 @@ import debugFactory from 'debug'
 
 import constants from '../constants.js'
 // import Drawing from './drawing/drawing.js'
-import World from '../ecs/world.js'
+import World from 'colonialwars-lib/ecs'
 import Viewport from './viewport.js'
 import InputManager from './input/input-manager.js'
 import InputTracker from './input/input-tracker.js'
