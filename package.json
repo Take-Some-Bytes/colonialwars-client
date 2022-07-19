@@ -16,7 +16,8 @@
   },
   "dependencies": {
     "debug": "^4.3.3",
-    "joi": "^17.6.0"
+    "joi": "^17.6.0",
+    "colonialwars-lib": "git://github.com/Take-Some-Bytes/colonialwars-lib.git#main"
   },
   "devDependencies": {
     "@snowpack/plugin-dotenv": "^2.2.0",
