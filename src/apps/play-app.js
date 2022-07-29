@@ -3,10 +3,12 @@
  * @fileoverview PlayApp class to handle application logic while playing the game.
  */
 
+import { WSConn } from 'colonialwars-lib/cwdtp'
+
 import debugFactory from 'debug'
 import constants from '../constants.js'
 import Game from '../game/game.js'
-import WSConn from '../cwdtp/conn.js'
+import * as crypto from '../cwdtp/crypto.js'
 
 import { ErrorDisplayer } from '../helpers/display-utils.js'
 
@@ -130,8 +132,13 @@ export default class PlayApp {
     const self = this
 
     return new Promise((resolve, reject) => {
-      this.conn = new WSConn(url)
-      this.conn.on('connect', () => {
+      this.conn = new WSConn(url, {
+        crypto,
+        pingTimeout: 30 * 1000,
+        createWs: (...args) => new WebSocket(...args)
+      })
+      this.conn.on('open', () => {
+        debug('Connection opened')
         resolve()
       })
       this.conn.on('error', function onError (err) {
@@ -174,8 +181,8 @@ export default class PlayApp {
         reject(new Error('Ready acknowledgement timeout!'))
       }, 10000)
 
-      this.conn.emit(communications.CONN_READY)
-      this.conn.on(communications.CONN_READY_ACK, mapData => {
+      this.conn.send(communications.CONN_READY)
+      this.conn.messages.on(communications.CONN_READY_ACK, mapData => {
         clearTimeout(readyAckTimeout)
         debug('Map data: %O', mapData)
         resolve(mapData)

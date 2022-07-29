@@ -48,7 +48,7 @@ const COMPONENT_MAP = {
  *
  * @typedef {Object} GameOpts
  * @prop {CanvasRenderingContext2D} context
- * @prop {import('../cwdtp/conn').default} conn
+ * @prop {import('colonialwars-lib/cwdtp').WSConn<string>} conn
  * @prop {import('../apps/play-app').MapData} mapData
  * @prop {import('../helpers/display-utils').ViewportDimensions} vwDimensions
  */
@@ -237,7 +237,7 @@ export default class Game {
     const outbound = this._outboundMsgs.splice(0)
 
     for (const msg of outbound) {
-      this._conn.emit(communications.CONN_CLIENT_ACTION, msg)
+      this._conn.send(communications.CONN_CLIENT_ACTION, msg)
     }
   }
 
@@ -346,7 +346,7 @@ export default class Game {
     await this._initRenderer()
 
     this._inputManager.on('input', this._onInput.bind(this))
-    this._conn.on(communications.CONN_UPDATE, this._onGameState.bind(this))
+    this._conn.messages.on(communications.CONN_UPDATE, this._onGameState.bind(this))
 
     this._initialized = true
 
