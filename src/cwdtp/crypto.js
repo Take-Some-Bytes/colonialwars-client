@@ -31,26 +31,19 @@ if (typeof window !== 'undefined' && typeof window.crypto !== 'undefined') {
   deepFreeze(window.crypto)
 }
 
+export const algorithms = {
+  sha1: 'SHA-1',
+  sha256: 'SHA-256',
+  sha384: 'SHA-384',
+  sha512: 'SHA-512'
+}
+
 /**
  * Returns a Uint8Array of random bytes.
  * @param {number} len How many bytes to generate.
  * @returns {Promise<Uint8Array>}
  */
 export function randomBytes (len) {
-  //   if (typeof require === 'function') {
-  //     // Node.JS mode.
-  //     const crypto = require('crypto')
-  // return new Promise((resolve, reject) => {
-  //   crypto.randomBytes(len, (err, buf) => {
-  //     if (err) {
-  //       reject(err)
-  //       return
-  //     }
-  //     resolve(buf)
-  //   })
-  // })
-  //   } else if (typeof window !== 'undefined' && window.crypto) {
-  //     // Browser mode.
   const buf = new Uint8Array(len)
   return new Promise(resolve => {
     setTimeout(() => {
@@ -58,42 +51,16 @@ export function randomBytes (len) {
       resolve(buf)
     })
   })
-  //   } else {
-  //     throw new Error('Found no functions to generate random bytes!')
-  //   }
 }
 
 /**
  * Hashs an ArrayBuffer or ArrayBufferView.
  * @param {ArrayBuffer|ArrayBufferView} data The data to hash.
- * @param {'SHA-1'|'SHA-256'|'SHA-384'|'SHA-512'} alg The algorithm to use.
+ * @param {string} alg The algorithm to use.
  * @returns {Promise<ArrayBuffer>}
  */
 export function hash (data, alg) {
-  //   if (typeof require === 'function') {
-  //     // Node.JS mode.
-  //     const crypto = require('crypto')
-  //     const debug = require('debug')('cw-client:crypto')
-  //     // We keep this mapping here because the Node.JS crypto API accepts
-  //     // different name forms for the same hash algorithm.
-  // const algs = {
-  //   'SHA-1': 'sha1',
-  //   'SHA-256': 'sha256',
-  //   'SHA-384': 'sha384',
-  //   'SHA-512': 'sha512'
-  // }
-  // return (async () => {
-  //   debug('Creating hash with algorithm %s', alg)
-  //   const hash = crypto.createHash(algs[alg])
-  //   hash.update(data)
-  //   const digest = hash.digest()
-  //   return digest.buffer
-  // })()
-  //   } else if (typeof window !== 'undefined' && window.crypto) {
-  //     // Browser mode.
   debug('Creating hash with algorithm %s', alg)
+
   return window.crypto.subtle.digest(alg, new Uint8Array(data))
-  //   } else {
-  //     throw new Error('Found no functions to generate hashes!')
-  //   }
 }
