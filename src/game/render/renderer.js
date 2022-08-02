@@ -5,10 +5,9 @@
 
 import debugFactory from 'debug'
 
-import { Vector2D } from 'colonialwars-lib/math'
+import { Vector2D, inBound } from 'colonialwars-lib/math'
 
 import split from './splitter.js'
-import { inBound } from '../../helpers/number-utils.js'
 
 const debug = debugFactory('cw-client:renderer')
 

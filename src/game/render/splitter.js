@@ -2,7 +2,7 @@
 
 import debugFactory from 'debug'
 
-import { findAllDivisors } from '../../helpers/number-utils'
+import { getFactors } from 'colonialwars-lib/math'
 
 const debug = debugFactory('cw-client:splitter')
 
@@ -36,26 +36,26 @@ function calculateChunkSize (dimensions) {
     }
   }
 
-  const widthDivisors = findAllDivisors(dimensions.width)
-  const heightDivisors = findAllDivisors(dimensions.height)
+  const widthFactors = getFactors(dimensions.width)
+  const heightFactors = getFactors(dimensions.height)
 
   // We don't need 1 and the number itself as a divisor.
-  widthDivisors.pop()
-  heightDivisors.pop()
-  widthDivisors.shift()
-  heightDivisors.shift()
+  widthFactors.pop()
+  heightFactors.pop()
+  widthFactors.shift()
+  heightFactors.shift()
 
-  // Get a small divisor, because that means we get bigger chunks.
-  widthDivisors.splice(Math.floor(widthDivisors.length / 2))
-  heightDivisors.splice(Math.floor(heightDivisors.length / 2))
+  // Get a small factor, because that means we get bigger chunks.
+  widthFactors.splice(Math.floor(widthFactors.length / 2))
+  heightFactors.splice(Math.floor(heightFactors.length / 2))
 
-  debug('Possible width divisors: %O', widthDivisors)
-  debug('Possible height divisors: %O', heightDivisors)
+  debug('Possible width divisors: %O', widthFactors)
+  debug('Possible height divisors: %O', heightFactors)
 
   return {
     // Lean towards the first third of divisors.
-    x: dimensions.width / widthDivisors[Math.round(widthDivisors.length / 3) - 1],
-    y: dimensions.height / heightDivisors[Math.round(widthDivisors.length / 3) - 1]
+    x: dimensions.width / widthFactors[Math.round(widthFactors.length / 3) - 1],
+    y: dimensions.height / heightFactors[Math.round(widthFactors.length / 3) - 1]
   }
 }
 

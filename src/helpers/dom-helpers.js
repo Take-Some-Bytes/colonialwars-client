@@ -3,7 +3,7 @@
  * @fileoverview Functions to help the with DOM manipulation
  */
 
-import { bound } from './number-utils.js'
+import { bound } from 'colonialwars-lib/math'
 
 /**
  * @typedef {Object} Bounds
