@@ -13,6 +13,25 @@ The format is based on [Keep a Changelog][1], and this project adheres to [Seman
 
 ## [Unreleased]
 
+### Added:
+- Add new tilesheet. This new tilesheet contains all the types of tiles, so we don't have to
+deal with "biomes".
+- Added [``colonialwars-lib``](https://github.com/Take-Some-Bytes/colonialwars-lib) as a
+dependency to reduce code duplication. The ``colonialwars-lib`` package takes care of CWDTP
+connections, ECS, and math utilities.
+
+### Changed:
+- Disabled games in game selection if they are full.
+- Stopped using non-standard use of ``Error.prototype.stack``.
+- Updated expected structure of game info received from the ``/games-info`` API.
+- Updated expected structure of data received on a ``CONN_READY_ACK`` event.
+- Redesigned the game loop from the ground up:
+  * Used ECS to manage game entities, including the player.
+  * Separated single game loop iterations into clear phases (input, render, etc.).
+  * Discarded ``MapDrawer``, and renamed ``Drawer`` to ``Renderer``.
+  * Rewrote ``InputManager`` to allow for dynamically adding and removing keybindings.
+  * Rewrote the ``ChunkSplitter`` class as a function.
+
 ## [v0.5.4] - 2022-05-20
 
 ### Changed:
