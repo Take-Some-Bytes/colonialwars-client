@@ -12,6 +12,14 @@ import split from './splitter.js'
 const debug = debugFactory('cw-client:renderer')
 
 /**
+ * TODO: Figure out how we want to load assets.
+ *
+ * Assets are... finicky. We risk wasting too much time if we load them all at
+ * once. We also risk attempting to use non-existent sprites if we load them
+ * on-demand. Preferably, all rendering should be synchronous.
+ * (2022/08/17) Take-Some-Bytes */
+
+/**
  * @callback RenderMapFunc
  * @param {CanvasRenderingContext2D} context The rendering context to use.
  * @param {RenderMapOpts} opts Rendering options.
@@ -85,6 +93,10 @@ export default class Renderer {
     const workCanvas = document.createElement('canvas')
     const workCtx = workCanvas.getContext('2d')
 
+    /**
+     * TODO: Handle cases where map size > 15000 pixels.
+     * Canvases don't work at that size.
+     * (2022/08/17) Take-Some-Bytes */
     await mapRenderer(workCtx, {})
 
     const res = await split(workCanvas, {
