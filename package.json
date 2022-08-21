@@ -3,8 +3,10 @@
   "description": "Colonial Wars client-side application.",
   "version": "0.5.4",
   "scripts": {
-    "start": "snowpack dev",
-    "build": "snowpack build"
+    "dev": "vite dev",
+    "build": "vite build",
+    "preview": "vite preview",
+    "clean-build": "rm -r dist"
   },
   "homepage": "https://github.com/Take-Some-Bytes/colonialwars-client#colonial-wars-client",
   "bugs": {
@@ -15,14 +17,13 @@
     "url": "https://github.com/Take-Some-Bytes/colonialwars-client.git"
   },
   "dependencies": {
+    "colonialwars-lib": "git://github.com/Take-Some-Bytes/colonialwars-lib.git#main",
     "debug": "^4.3.3",
-    "joi": "^17.6.0",
-    "colonialwars-lib": "git://github.com/Take-Some-Bytes/colonialwars-lib.git#main"
+    "joi": "^17.6.0"
   },
   "devDependencies": {
-    "@snowpack/plugin-dotenv": "^2.2.0",
-    "snowpack": "^3.8.8",
-    "standard": "*"
+    "standard": "*",
+    "vite": "^3.0.9"
   },
   "author": {
     "name": "Horton Cheng",
