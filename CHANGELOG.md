@@ -12,9 +12,11 @@ The format is based on [Keep a Changelog][1], and this project adheres to [Seman
 -->
 
 ## [Unreleased]
+**PROJECT MAINTAINERS**: The required Node.JS versions has been updated. Only Node.JS 14 and 16
+are supported now. This is due to the switch from ``snowpack`` to ``vite``.
 
 ### Added:
-- Add new tilesheet. This new tilesheet contains all the types of tiles, so we don't have to
+- Added new tilesheet. This new tilesheet contains all the types of tiles, so we don't have to
 deal with "biomes".
 - Added [``colonialwars-lib``](https://github.com/Take-Some-Bytes/colonialwars-lib) as a
 dependency to reduce code duplication. The ``colonialwars-lib`` package takes care of CWDTP
@@ -22,6 +24,7 @@ connections, ECS, and math utilities.
 
 ### Changed:
 - Disabled games in game selection if they are full.
+- Migrated from ``snowpack`` to [``vite``](https://npmjs.com/package/vite).
 - Stopped using non-standard use of ``Error.prototype.stack``.
 - Updated expected structure of game info received from the ``/games-info`` API.
 - Updated expected structure of data received on a ``CONN_READY_ACK`` event.
