@@ -20,15 +20,13 @@ Aside from the development dependencies listed in ``package.json``, this project
 needs ``colonialwars-server`` .
 
 ## Running the Development Server
-The development server is powered by [``snowpack``](https://npmjs.com/package/snowpack).
+The development server is powered by [``vite``](https://npmjs.com/package/vite).
 To start it up, just run:
 ```sh
-npm start
+npm run dev
 ```
-A new browser tab will open once snowpack has completed its work.
 
-The dynamic route (``/xhr``) is handled via snowpack's
-[``routes``](https://www.snowpack.dev/guides/routing) configuration.
+The dynamic route (``/xhr``) is handled using a simple [Vite plugin](https://vitejs.dev/guide/api-plugin.html).
 
 Make sure you have Node.JS [installed](https://nodejs.org), with a version that satisfies
 the [``engines``](https://github.com/Take-Some-Bytes/colonialwars-client/blob/main/package.json#L26)
