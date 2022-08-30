@@ -181,7 +181,7 @@ export function acceptAuthoritativeState (state, opts) {
 
   const unprocessedInputs = player.unprocessedInputs.splice(0)
   const stillUnprocessed = unprocessedInputs.filter(pending => {
-    if (pending.inputNum <= state.lastProcessedInput) {
+    if (pending.inputNum <= state.self.lastProcessedInput) {
       // Already processed. Its effect is already taken into account into the world update
       // we just got, so we can forget about it
       player.lastInputProcessTime = pending.timestamp
