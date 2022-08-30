@@ -43,10 +43,13 @@ export default class InputTracker extends EventEmitter {
     */
   onKeyDown (event) {
     const key = event.key.toLowerCase()
-
-    if (!this.keysPressed.includes(key)) {
-      this.keysPressed.push(key)
+    if (this.keysPressed.includes(key)) {
+      // Already pressed.
+      return
     }
+
+    this.keysPressed.push(key)
+
     const state = {
       inputType: 'key',
       keysPressed: this.keysPressed,
@@ -66,8 +69,13 @@ export default class InputTracker extends EventEmitter {
     */
   onKeyUp (event) {
     const key = event.key.toLowerCase()
+    if (!this.keysPressed.includes(key)) {
+      // How the hell do you unpress a key if it's not even pressed?
+      return
+    }
 
-    this.keysPressed.splice(key, 1)
+    this.keysPressed.splice(this.keysPressed.indexOf(key), 1)
+
     const state = {
       inputType: 'key',
       keysPressed: this.keysPressed,
